@@ -18,7 +18,7 @@ const generatePDF = require("./routes/genereate-pdf");
 const forgetPasswordRouter = require("./routes/forgetPasswordRoute");
 const changePasswordRouter = require("./routes/changePasswordRoute");
 const checkRoleRoute = require("./routes/checkRole");
-const amountPayRouter = require("./routes/AmountpayRoute");
+const amountPayRouter = require("./routes/amountPayRoute");
 
 const app = express();
 
@@ -52,15 +52,16 @@ app.use("/", forgetPasswordRouter);
 app.use("/", changePasswordRouter);
 app.use("/", amountPayRouter);
 
-const Port = process.env.port || 3003;
+const PORT = process.env.PORT || 3003;
+
 mongoose
   .connect(MONGO_DB_URL)
   .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(Port, () => {
-      console.log(`server run on address http://localhost:${Port}`);
+    console.log("✅ Connected to MongoDB");
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
-    console.log("Error while connecting to MongoDB", err);
+    console.error("❌ Error while connecting to MongoDB", err);
   });

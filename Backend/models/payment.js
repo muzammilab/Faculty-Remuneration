@@ -13,7 +13,7 @@ const paymentSchema = new mongoose.Schema(
     academicYear: { type: String, required: true }, // e.g. "2025-26"
     semesterType: { type: String, enum: ["Odd", "Even"], required: true },
 
-    baseSalary: { type: Number, default: 0 },
+    // baseSalary: { type: Number, default: 0 },
     travelAllowance: { type: Number, default: 0 },
 
     subjectBreakdown: [

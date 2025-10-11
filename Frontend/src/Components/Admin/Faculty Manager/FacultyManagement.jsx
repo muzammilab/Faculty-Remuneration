@@ -204,8 +204,9 @@ function FacultyManagement() {
                     <th>Name</th>
                     <th>Department</th>
                     <th>Role</th>
-                    <th>Contact Information</th>
-                    <th>Assigned Subjects</th>
+                    <th>Email</th>
+                    <th>Mobile Number</th>
+                    {/* <th>Assigned Subjects</th> */}
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -237,22 +238,8 @@ function FacultyManagement() {
                         </span>
                       </td>
                       <td>{faculty.email}</td>
-                      <td>
-                        {/* {faculty.assignedSubjects &&
-                        faculty.assignedSubjects.length > 0 ? (
-                          faculty.assignedSubjects.map((subject, idx) => (
-                            <span
-                              key={idx}
-                              className="badge bg-secondary me-1 mb-1"
-                            >
-                              {subject.name} (Sem {subject.semester})
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-muted">
-                            No subjects assigned
-                          </span>
-                        )} */}
+                      <td>{faculty.phone}</td>
+                      {/* <td>
                         {faculty.assignedSubjects &&
                         faculty.assignedSubjects.length > 0 ? (
                           faculty.assignedSubjects.map((assigned, i) =>
@@ -273,7 +260,7 @@ function FacultyManagement() {
                             No subjects assigned
                           </span>
                         )}
-                      </td>
+                      </td> */}
                       <td>
                         <Button
                           variant="link"

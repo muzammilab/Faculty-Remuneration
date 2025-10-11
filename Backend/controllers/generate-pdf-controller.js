@@ -291,10 +291,10 @@ exports.getPDF = async (req, res) => {
       .text(`Rs. ${payment.baseSalary.toFixed(2)}`, 180, salaryBoxY + 10) */
       .font("Helvetica-Bold")
       .fillColor("#b9770e")
-      .text("Travel Allowance:", 60, salaryBoxY + 28)
+      .text("Travel Allowance:", 60, salaryBoxY + 10)
       .font("Helvetica")
       .fillColor("black")
-      .text(`Rs. ${payment.travelAllowance.toFixed(2)}`, 180, salaryBoxY + 28)
+      .text(`Rs. ${payment.travelAllowance.toFixed(2)}`, 180, salaryBoxY + 10)
       .font("Helvetica-Bold")
       .fillColor("#b9770e")
       .text("Duties Total:", 320, salaryBoxY + 10)
@@ -575,7 +575,8 @@ exports.getYearPDF = async (req, res) => {
     const allPaid = payments.every((p) => p.status === "paid");
     if (!allPaid) {
       return res.status(400).json({
-        message: "Slip can only be generated after all semester payments are successful",
+        message:
+          "Slip can only be generated after all semester payments are successful",
       });
     }
 
@@ -870,7 +871,7 @@ exports.getYearPDF = async (req, res) => {
       : 0;
 
     // Salary Totals
-/*     const totalBase =
+    /*     const totalBase =
       (oddPayment?.baseSalary || 0) + (evenPayment?.baseSalary || 0); */
     const totalTravel =
       (oddPayment?.travelAllowance || 0) + (evenPayment?.travelAllowance || 0);
@@ -899,10 +900,10 @@ exports.getYearPDF = async (req, res) => {
       .text(`Rs. ${totalBase.toFixed(2)}`, 180, salaryBoxY + 10) */
       .font("Helvetica-Bold")
       .fillColor("#b9770e")
-      .text("Travel Allowance:", 60, salaryBoxY + 28)
+      .text("Travel Allowance:", 60, salaryBoxY + 10)
       .font("Helvetica")
       .fillColor("black")
-      .text(`Rs. ${totalTravel.toFixed(2)}`, 180, salaryBoxY + 28)
+      .text(`Rs. ${totalTravel.toFixed(2)}`, 180, salaryBoxY + 10)
       .font("Helvetica-Bold")
       .fillColor("#b9770e")
       .text("Duties Total:", 320, salaryBoxY + 10)

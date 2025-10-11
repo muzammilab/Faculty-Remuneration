@@ -57,10 +57,10 @@ function FacultyPaymentDetails() {
   }, [id]);
 
   const remunerationSummary = [
-    {
+    /* {
       component: "Base Salary",
       amount: `₹ ${remuneration?.payment?.baseSalary || 0}`,
-    },
+    }, */
     {
       component: "Travel Allowance",
       amount: `₹ ${remuneration?.payment?.travelAllowance || 0}`,

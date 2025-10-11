@@ -409,7 +409,7 @@ exports.postCreate = async (req, res) => {
       );
 
       payment.totalAmount =
-        payment.baseSalary +
+        /* payment.baseSalary + */
         payment.travelAllowance +
         payment.totalRemuneration;
 
@@ -417,7 +417,7 @@ exports.postCreate = async (req, res) => {
       return res.status(200).json({ message: "Payment updated", payment });
     } else {
       // ✅ Create new payment doc
-      const totalAmount = baseSalary + travelAllowance + totalRemuneration;
+      const totalAmount = /* baseSalary + */ travelAllowance + totalRemuneration;
       payment = new Payment({
         facultyId,
         facultyName,

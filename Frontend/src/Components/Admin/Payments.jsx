@@ -906,7 +906,7 @@ function Payments() {
                     </span>
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <td>Base Salary</td>
                   <td>
                     <span className="fw-bold text-primary">
@@ -916,7 +916,7 @@ function Payments() {
                         : "0"}
                     </span>
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <td>Calculated Remuneration</td>
                   <td>
@@ -937,7 +937,7 @@ function Payments() {
                         (sum, item) => sum + item.totalPayment,
                         0
                       ) +
-                      (facultyData ? facultyData.baseSalary || 0 : 0) +
+                      /* (facultyData ? facultyData.baseSalary || 0 : 0) + */
                       (facultyData ? facultyData.travelAllowance || 0 : 0)
                     ).toLocaleString()}
                   </td>

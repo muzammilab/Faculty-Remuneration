@@ -16,11 +16,11 @@ function FacultySidebar() {
       label: "Payments",
       path: "/faculty/payments",
     },
-    {
+    /* {
       icon: <FaHistory />,
       label: "Payment History",
       path: "/faculty/payment-history",
-    },
+    }, */
   ];
 
   const [facultyData, setFacultyData] = useState(null);
@@ -39,7 +39,7 @@ function FacultySidebar() {
         const facultyRes = await axios.get(
           `http://localhost:3002/admin/faculty/getSingle/${facultyId}`
         );
-        console.log("Getting Faculty Details For dashboard");
+        console.log("Getting Faculty Details For Faculty Sidebar");
         console.log(facultyRes.data);
         setFacultyData(facultyRes.data);
       } catch (err) {

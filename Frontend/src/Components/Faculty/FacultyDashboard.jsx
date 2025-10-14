@@ -10,7 +10,7 @@ function FacultyDashboard() {
   const handleSidebarClose = () => setShowSidebar(false);
 
   const [facultyData, setFacultyData] = useState(null);
-  const [facultyPayData, setFacultyPayData] = useState(null);
+  /* const [facultyPayData, setFacultyPayData] = useState(null); */
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,14 +27,16 @@ function FacultyDashboard() {
         const facultyRes = await axios.get(
           `http://localhost:3002/admin/faculty/getSingle/${facultyId}`
         );
-        console.log("Getting Faculty Details");
+        console.log("Getting Faculty Details for Dashboard");
         console.log(facultyRes.data);
         setFacultyData(facultyRes.data);
       } catch (err) {
-        console.error("Error fetching faculty data:", err);
+        console.error("Error fetching Faculty Data:", err);
+      } finally {
+        setLoading(false);
       }
 
-      try {
+      /* try {
         const facultyPaymentRes = await axios.get(
           `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}`
         );
@@ -42,10 +44,10 @@ function FacultyDashboard() {
         console.log(facultyPaymentRes.data);
         setFacultyPayData(facultyPaymentRes.data);
       } catch (err) {
-        console.error("Error fetching faculty data:", err);
+        console.error("Error fetching Faculty Payment Data:", err);
       } finally {
         setLoading(false);
-      }
+      } */
     };
 
     fetchFacultyData();
@@ -66,7 +68,7 @@ function FacultyDashboard() {
   // Destructuring response from faculty details
   const { name, email, phone, department, designation, employeeId, baseSalary, travelAllowance, assignedSubjects } = facultyData;
 
-  const { createdAt, totalAmount } = facultyPayData.payments;
+  /* const { createdAt, totalAmount } = facultyPayData.payments; */
 
   return (
     <Container fluid className="p-4 bg-light min-vh-100">

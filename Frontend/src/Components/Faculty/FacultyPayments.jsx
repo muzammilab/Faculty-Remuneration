@@ -22,7 +22,7 @@ function FacultyPayments() {
           `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}`
         );
 
-        const payments = res.data.payments;
+        const payments = res.data.payments ;
         console.log("Getting Payment Details for Faculty Payments Page ");
         console.log(res.data);
         const grouped = {};

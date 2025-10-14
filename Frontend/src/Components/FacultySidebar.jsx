@@ -52,7 +52,16 @@ function FacultySidebar() {
     fetchFacultyData();
   }, []);
 
-  if (loading) return <div className="p-4">Loading Dashboard...</div>;
+  if (loading)
+  return (
+    <div className="d-flex flex-column align-items-center justify-content-center p-4" style={{ height: "100%" }}>
+      <div className="spinner-border text-primary mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+      <p className="text-muted fw-semibold">Fetching your dashboard...</p>
+    </div>
+  );
+;
   if (!facultyData) return <div className="p-4">No faculty data found</div>;
 
   const { name, designation } = facultyData

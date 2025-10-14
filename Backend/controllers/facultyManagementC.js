@@ -62,7 +62,7 @@ exports.addFaculty = async (req, res) => {
       phone: req.body.phone,
       department: req.body.department,
       role: req.body.role || "faculty",
-      baseSalary: req.body.baseSalary,
+      /* baseSalary: req.body.baseSalary, */
       travelAllowance: req.body.travelAllowance,
       designation: req.body.designation,
       assignedSubjects, // ✅ now matches schema

@@ -1,24 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Table,
-  Button,
-  ListGroup,
-  Offcanvas,
-} from "react-bootstrap";
-import {
-  FaBars,
-  FaUser,
-  FaMoneyBillWave,
-  FaHistory,
-  FaEdit,
-  FaSignOutAlt,
-  FaBus,
-  FaChalkboardTeacher,
-} from "react-icons/fa";
+import { Container, Row, Col, Card, Table, Button, ListGroup, Offcanvas } from "react-bootstrap";
+import { FaBars, FaUser, FaMoneyBillWave, FaHistory, FaEdit, FaSignOutAlt, FaBus, FaChalkboardTeacher } from "react-icons/fa";
 import FacultySidebar from "../FacultySidebar";
 import axios from "axios";
 
@@ -69,7 +51,16 @@ function FacultyDashboard() {
     fetchFacultyData();
   }, []);
 
-  if (loading) return <div className="p-4">Loading Dashboard...</div>;
+  if (loading)
+  return (
+    <div className="d-flex flex-column align-items-center justify-content-center p-4" style={{ height: "100%" }}>
+      <div className="spinner-border text-primary mb-3" style={{ width: "3rem", height: "3rem" }} role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+      <p className="text-muted fw-semibold">Fetching your dashboard...</p>
+    </div>
+  );
+
   if (!facultyData) return <div className="p-4">No faculty data found</div>;
 
   // Destructuring response from faculty details
@@ -129,7 +120,7 @@ function FacultyDashboard() {
 
           {/* Payment Overview Cards */}
           <Row className="mb-4">
-            <Col md={4} className="mb-3">
+            {/* <Col md={4} className="mb-3">
               <Card className="shadow-sm border-0 rounded-4 bg-white">
                 <Card.Body className="p-4">
                   <div className="d-flex align-items-center">
@@ -143,7 +134,7 @@ function FacultyDashboard() {
                   </div>
                 </Card.Body>
               </Card>
-            </Col>
+            </Col> */}
             <Col md={4} className="mb-3">
               <Card className="shadow-sm border-0 rounded-4 bg-white">
                 <Card.Body className="p-4">
@@ -274,181 +265,6 @@ function FacultyDashboard() {
               <p className="text-muted mb-0">No assigned subjects</p>
             )}
           </Card>
-          {/* <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-1">Current Semester Subjects</h5>
-            <small className="text-muted mb-3 d-block">
-              Subjects assigned for the current semester.
-            </small>
-            <Table
-              bordered
-              hover
-              responsive
-              striped
-              className="mt-3 align-middle"
-            >
-              <thead className="table-light">
-                <tr>
-                  <th>Semester</th>
-                  <th>Subject Name</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignedSubjects?.length > 0 ? (
-                  assignedSubjects.map((yearObj) =>
-                    yearObj.semesters.map((sem) =>
-                      sem.subjects.map((subj) => (
-                        <tr key={subj.subjectId}>
-                          <td>
-                            Semester {subj.semester} ({sem.semesterType})
-                          </td>
-                          <td>{subj.name}</td>
-                          <td>
-                            <span className="badge bg-primary">Active</span>
-                          </td>
-                        </tr>
-                      ))
-                    )
-                  )
-                ) : (
-                  <tr>
-                    <td colSpan="3" className="text-center text-muted">
-                      No subjects assigned.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
-          </Card> */}
-
-          {/* Recent Payments Table OR Remuneration Summary */}
-          {/* <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="fw-semibold mb-0">Remuneration Summary</h5>
-            </div>
-
-            {facultyPayData?.breakdown && facultyPayData.breakdown.length > 0 ? (
-              // Group by year
-              [
-                ...new Set(facultyPayData.breakdown.map((i) => i.academicYear)),
-              ].map((year, yIdx) => {
-                const yearGroup = facultyPayData.breakdown.filter(
-                  (i) => i.academicYear === year
-                );
-
-                return (
-                  <div key={yIdx} className="mb-4">
-                    <h6 className="fw-bold text-primary mb-2">
-                      Academic Year: {year}
-                    </h6>
-
-                    {["Odd", "Even"].map((semType, sIdx) => {
-                      const semGroup = yearGroup.filter(
-                        (i) => i.semesterType === semType
-                      );
-                      if (semGroup.length === 0) return null;
-
-                      return (
-                        <div key={sIdx} className="mb-3 ps-3">
-                          <p className="fw-semibold text-secondary mb-1">
-                            {semType} Semester
-                          </p>
-
-                          <Table
-                            bordered
-                            hover
-                            responsive
-                            striped
-                            className="align-middle mb-0"
-                          >
-                            <thead className="table-light">
-                              <tr>
-                                <th>Subject Name</th>
-                                <th>Semester</th>
-                                <th>Remuneration</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {semGroup.map((item, idx) => (
-                                <tr key={idx}>
-                                  <td>{item.subjectName}</td>
-                                  <td className="text-primary">
-                                    Semester {item.semester}
-                                  </td>
-                                  <td className="text-success fw-semibold">
-                                    ₹{item.subjectTotal}
-                                  </td>
-                                </tr>
-                              ))}
-
-                              {/* One row per sem-type for the Sem Slip 
-                              <tr>
-                                <td colSpan={3} className="text-center">
-                                  <Button
-                                    variant="outline-primary"
-                                    size="sm"
-                                    onClick={() => {
-                                      const paymentId = semGroup[0]?.paymentId; // pick the paymentId for this semType
-                                      if (paymentId) {
-                                        window.open(
-                                          `http://localhost:3002/payment/generate-pdf/${paymentId}`,
-                                          "_blank"
-                                        );
-                                      } else {
-                                        console.error(
-                                          "❌ No paymentId found for",
-                                          semType,
-                                          year
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    Generate {semType} Slip
-                                  </Button>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </Table>
-                        </div>
-                      );
-                    })}
-
-                    {/* One row per year for Yearly Slip 
-                    <div className="ps-3 mt-2">
-                      <Table
-                        bordered
-                        hover
-                        responsive
-                        striped
-                        className="align-middle mb-0"
-                      >
-                        <tbody>
-                          <tr>
-                            <td className="text-center">
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                onClick={() =>
-                                  navigate(
-                                    `/admin/payment/yearSlip/${id}/${year}`
-                                  )
-                                }
-                              >
-                                Generate Yearly Slip
-                              </Button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </Table>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-muted mb-0">No remuneration records found</p>
-            )}
-          </Card> */}
-          
         </Col>
       </Row>
 

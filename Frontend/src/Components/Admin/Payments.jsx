@@ -572,7 +572,7 @@ function Payments() {
             </Row> */}
 
             <Row className="mb-3">
-              <Col md={4}>
+              {/* <Col md={4}>
                 <Form.Group>
                   <Form.Label>Base Salary</Form.Label>
                   <InputGroup>
@@ -588,7 +588,7 @@ function Payments() {
                     />
                   </InputGroup>
                 </Form.Group>
-              </Col>
+              </Col> */}
               <Col md={4}>
                 <Form.Group>
                   <Form.Label>Travel Allowance</Form.Label>

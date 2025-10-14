@@ -1,24 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Form,
-  Row,
-  Col,
-  Button,
-  Alert,
-  Card,
-  Badge,
-} from "react-bootstrap";
-import {
-  FaArrowLeft,
-  FaUserPlus,
-  FaUserTie,
-  FaBookOpen,
-  FaEnvelope,
-  FaPhone,
-  FaCalendarAlt,
-  FaLayerGroup,
-} from "react-icons/fa";
+import { Container, Form, Row, Col, Button, Alert, Card, Badge, InputGroup } from "react-bootstrap";
+import { FaArrowLeft, FaUserPlus, FaUserTie, FaBookOpen, FaEnvelope, FaPhone, FaCalendarAlt, FaLayerGroup } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import api from "../../../utils/api";
 import Select from "react-select";
@@ -33,7 +15,7 @@ function AddFacultyForm() {
     email: "",
     password: "",
     phone: "",
-    baseSalary: "",
+    /* baseSalary: "", */
     travelAllowance: "",
     academicYear: "",
     semesterType: "",
@@ -127,21 +109,6 @@ function AddFacultyForm() {
     }
   };
 
-  /*   const handleAddAssignment = (e) => {
-    e.preventDefault();
-    if (formData.semester && formData.subject) {
-      const exists = assignedSubjects.some((a) => a.semester === formData.semester && a.subject === formData.subject);
-
-      if (!exists) {
-        setAssignedSubjects((prev) => [
-          ...prev,
-          { semester: formData.semester, subject: formData.subject },
-        ]);
-      }
-      setFormData((prev) => ({ ...prev, subject: "", semester: "" }));
-    }
-  }; */
-
   const handleRemoveAssignment = (index) => {
     setAssignedSubjects((prev) => prev.filter((_, i) => i !== index));
   };
@@ -185,7 +152,7 @@ function AddFacultyForm() {
         phone: formData.phone,
         department: formData.department,
         designation: formData.designation,
-        baseSalary: Number(formData.baseSalary),
+        /* baseSalary: Number(formData.baseSalary), */
         travelAllowance: Number(formData.travelAllowance),
         academicAssignments, // ✅ final nested structure
       };
@@ -202,7 +169,7 @@ function AddFacultyForm() {
         email: "",
         password: "",
         phone: "",
-        baseSalary: "",
+        /* baseSalary: "", */
         travelAllowance: "",
         academicYear: "",
         semesterType: "",
@@ -230,66 +197,6 @@ function AddFacultyForm() {
       setLoading(false);
     }
   };
-
-  /* const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const facultyData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        department: formData.department,
-        designation: formData.designation,
-        baseSalary: Number(formData.baseSalary),
-        travelAllowance: Number(formData.travelAllowance),
-        academicYear: formData.academicYear,
-        semesterType: formData.semesterType,
-        subjects: assignedSubjects.map((subject) => ({
-          name: subject.subject,
-          semester: Number(subject.semester),
-        })),
-      };
-
-      const response = await api.post("/admin/faculty/add", facultyData);
-      console.log("Faculty created successfully:", response.data);
-      setSuccess(true);
-
-      // reset
-      setFormData({
-        name: "",
-        department: "",
-        designation: "",
-        email: "",
-        password: "",
-        phone: "",
-        baseSalary: "",
-        travelAllowance: "",
-        academicYear: "",
-        semesterType: "",
-        semester: "",
-        subject: "",
-      });
-      setAssignedSubjects([]);
-      setTimeout(() => setSuccess(false), 5000);
-    } catch (err) {
-      console.error("Error creating faculty:", err);
-      if (err.response?.status === 401) {
-        alert("Authentication failed. Please login again.");
-        navigate("/login");
-      } else {
-        setError(
-          err.response?.data?.error ||
-            "Failed to create faculty. Please try again."
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }; */
 
   const handleGoBack = () => {
     navigate("/admin/facultymanager");
@@ -387,7 +294,7 @@ function AddFacultyForm() {
                 <FaUserPlus className="text-success" />
                 <h5 className="fw-bold mb-0">Remuneration Details</h5>
               </div>
-              <Form.Group className="mb-3">
+              {/* <Form.Group className="mb-3">
                 <Form.Label>Base Salary</Form.Label>
                 <Form.Control
                   name="baseSalary"
@@ -398,18 +305,21 @@ function AddFacultyForm() {
                   placeholder="Enter Base Salary"
                   required
                 />
-              </Form.Group>
+              </Form.Group> */}
               <Form.Group className="mb-3">
                 <Form.Label>Travel Allowance</Form.Label>
-                <Form.Control
-                  name="travelAllowance"
-                  value={formData.travelAllowance}
-                  onChange={handleChange}
-                  type="number"
-                  min="0"
-                  placeholder="Enter Travel Allowance"
-                  required
-                />
+                <InputGroup>
+                  <InputGroup.Text>₹</InputGroup.Text>
+                  <Form.Control
+                    name="travelAllowance"
+                    value={formData.travelAllowance}
+                    onChange={handleChange}
+                    type="number"
+                    min="0"
+                    placeholder="Enter Travel Allowance"
+                    required
+                  />
+                </InputGroup>
               </Form.Group>
             </Col>
 
@@ -441,14 +351,25 @@ function AddFacultyForm() {
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Phone</Form.Label>
+                <InputGroup>
+                <InputGroup.Text>+91</InputGroup.Text>
                 <Form.Control
+                  type="tel"
                   name="phone"
                   value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Enter contact number"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 10) {
+                      setFormData({ ...formData, phone: value.replace(/\D/g, "") });
+                    }
+                  }}
+                  placeholder="Enter 10 digit contact number"
+                  maxLength="10"
                   required
                 />
+                </InputGroup>
               </Form.Group>
+
 
               {/* ✅ Academic Year + Semester Type */}
               <Card className="shadow-sm rounded-3 border-0 p-3 mt-4 bg-light">

@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Row, Col, Nav, Card, Button, Offcanvas, Badge } from "react-bootstrap";
-import { FaBars, FaUser, FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaSignOutAlt, FaDownload, FaChevronDown, FaChevronRight } from "react-icons/fa";
-import FacultySidebar from "../FacultySidebar";
+import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaDownload, FaChevronDown, FaChevronRight } from "react-icons/fa";
+import AdminNavbar from "../Admin/AdminNavbar";
+import FacultyMobileSidebar from "./FacultyMobileSidebar";
+import FacultyDesktopSidebar from "./FacultyDesktopSidebar";
 import axios from "axios";
 
 function FacultyPayments() {
   const [showSidebar, setShowSidebar] = useState(false);
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState("all");
   const [expandedItems, setExpandedItems] = useState({});
+  const [paymentData, setPaymentData] = useState({});
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
-  const [paymentData, setPaymentData] = useState({}); // initially empty
 
   useEffect(() => {
     const facultyId = localStorage.getItem("facultyId");
@@ -22,7 +25,7 @@ function FacultyPayments() {
           `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}`
         );
 
-        const payments = res.data.payments ;
+        const payments = res.data.payments;
         console.log("Getting Payment Details for Faculty Payments Page ");
         console.log(res.data);
         const grouped = {};
@@ -55,6 +58,8 @@ function FacultyPayments() {
         setPaymentData(grouped);
       } catch (err) {
         console.error("Error fetching payments:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -71,64 +76,68 @@ function FacultyPayments() {
   const getStatusBadge = (status) => {
     switch (status) {
       case "Completed":
-        return <Badge bg="success">Completed</Badge>;
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Completed
+          </span>
+        );
       case "Processing":
         return (
-          <Badge bg="warning" text="dark">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
             Processing
-          </Badge>
+          </span>
         );
       case "Pending":
-        return <Badge bg="secondary">Pending</Badge>;
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+            Pending
+          </span>
+        );
       default:
-        return <Badge bg="info">Unknown</Badge>;
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+            Unknown
+          </span>
+        );
     }
   };
 
   const renderSubjectCard = (subjectName, subjectData, yearPath) => (
-    <Card
+    <div
       key={subjectName}
-      className="mb-2 shadow-sm border-0 rounded-3 bg-light"
+      className="mb-3 bg-white border border-gray-200 rounded-xl shadow-sm p-4"
     >
-      <Card.Body className="p-3">
-        <div className="d-flex justify-content-between align-items-start mb-2">
-          <div>
-            <h6 className="fw-bold mb-1">{subjectName}</h6>
-            {/* <div className="text-muted small">
-              Term Work: {subjectData.termWork} papers | 
-              Oral/Practical: {subjectData.oralPractical} papers | 
-              Semester Papers: {subjectData.semesterPapers} papers
-            </div> */}
-          </div>
-          <div className="text-end">
-            <div className="fw-bold text-success">{subjectData.amount}</div>
-            {getStatusBadge(subjectData.status)}
-          </div>
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h6 className="font-bold text-gray-900 mb-1">{subjectName}</h6>
         </div>
+        <div className="text-right">
+          <div className="font-bold text-emerald-600 mb-2">
+            {subjectData.amount}
+          </div>
+          {getStatusBadge(subjectData.status)}
+        </div>
+      </div>
 
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="text-muted small">
-            {subjectData.status === "Completed"
-              ? `Paid on ${subjectData.paidDate}`
-              : `Due on ${subjectData.dueDate}`}
-          </div>
-          <div className="d-flex gap-2">
-            <Button
-              variant="outline-primary"
-              size="sm"
-              className="d-flex align-items-center gap-1"
-              onClick={() =>
-                navigate(
-                  `/faculty/payments/subjectremu/${subjectData.subjectId}/${yearPath}`
-                )
-              }
-            >
-              <FaFileInvoiceDollar /> View Details
-            </Button>
-          </div>
+      <div className="flex justify-between items-center">
+        <div className="text-gray-500 text-sm">
+          {subjectData.status === "Completed"
+            ? `Paid on ${subjectData.paidDate}`
+            : `Due on ${subjectData.dueDate}`}
         </div>
-      </Card.Body>
-    </Card>
+        <button
+          onClick={() =>
+            navigate(
+              `/faculty/payments/subjectremu/${subjectData.subjectId}/${yearPath}`
+            )
+          }
+          className="flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-xl text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-all"
+        >
+          <FaFileInvoiceDollar size={14} />
+          View Details
+        </button>
+      </div>
+    </div>
   );
 
   const renderSemester = (semesterName, subjects, yearPath, semesterType) => {
@@ -140,37 +149,38 @@ function FacultyPayments() {
     }, 0);
 
     return (
-      <div key={semesterName} className="mb-2">
-        <Card className="shadow-sm border-0 rounded-3 bg-primary bg-opacity-10">
-          <Card.Body className="p-3">
-            <div
-              className="d-flex justify-content-between align-items-center cursor-pointer"
-              onClick={() => toggleExpanded(semesterPath)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="d-flex align-items-center gap-2">
+      <div key={semesterName} className="mb-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
+          <div
+            className="p-4 cursor-pointer hover:bg-blue-100 transition-colors rounded-xl"
+            onClick={() => toggleExpanded(semesterPath)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
                 {isExpanded ? (
-                  <FaChevronDown size={14} />
+                  <FaChevronDown size={14} className="text-blue-600" />
                 ) : (
-                  <FaChevronRight size={14} />
+                  <FaChevronRight size={14} className="text-blue-600" />
                 )}
                 <div>
-                  <h6 className="fw-bold mb-0">{semesterName}</h6>
-                  <div className="text-muted small">
+                  <h6 className="font-bold text-gray-900 mb-1">
+                    {semesterName}
+                  </h6>
+                  <div className="text-gray-600 text-sm">
                     {subjectCount} Subject{subjectCount > 1 ? "s" : ""} • Total:
                     ₹{totalAmount.toLocaleString()}
                   </div>
                 </div>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="badge bg-primary">{subjectCount}</span>
-              </div>
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-semibold text-sm">
+                {subjectCount}
+              </span>
             </div>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
 
         {isExpanded && (
-          <div className="ms-4 mt-2">
+          <div className="ml-6 mt-3">
             {Object.entries(subjects).map(([subjectName, subjectData]) =>
               renderSubjectCard(subjectName, subjectData, yearPath)
             )}
@@ -197,35 +207,36 @@ function FacultyPayments() {
     }, 0);
 
     return (
-      <div key={semesterType} className="mb-3">
-        <Card className="shadow-sm border-0 rounded-4 bg-info bg-opacity-10">
-          <Card.Body className="p-3">
-            <div
-              className="d-flex justify-content-between align-items-center cursor-pointer"
-              onClick={() => toggleExpanded(semesterTypePath)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="d-flex align-items-center gap-2">
+      <div key={semesterType} className="mb-4">
+        <div className="bg-cyan-50 border border-cyan-200 rounded-xl shadow-sm">
+          <div
+            className="p-4 cursor-pointer hover:bg-cyan-100 transition-colors rounded-xl"
+            onClick={() => toggleExpanded(semesterTypePath)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
                 {isExpanded ? (
-                  <FaChevronDown size={16} />
+                  <FaChevronDown size={16} className="text-cyan-600" />
                 ) : (
-                  <FaChevronRight size={16} />
+                  <FaChevronRight size={16} className="text-cyan-600" />
                 )}
                 <div>
-                  <h6 className="fw-bold mb-0">{semesterType}</h6>
-                  <div className="text-muted small">
+                  <h6 className="font-bold text-gray-900 mb-1">
+                    {semesterType}
+                  </h6>
+                  <div className="text-gray-600 text-sm">
                     {semesterCount} Semester{semesterCount > 1 ? "s" : ""} •
                     Total: ₹{totalAmount.toLocaleString()}
                   </div>
                 </div>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="badge bg-info">{semesterCount}</span>
-                <Button
-                  variant="outline-info"
-                  size="sm"
-                  className="d-flex align-items-center gap-1"
-                  onClick={() => {
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600 text-white font-semibold text-sm">
+                  {semesterCount}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     const firstSemester = Object.values(semesters)[0];
                     const firstSubject = Object.values(firstSemester)[0];
                     const paymentId = firstSubject?.paymentId;
@@ -238,21 +249,23 @@ function FacultyPayments() {
                     } else {
                       console.error(
                         "❌ No paymentId found for",
-                        semType,
+                        semesterType,
                         yearPath
                       );
                     }
                   }}
+                  className="flex items-center gap-2 px-3 py-2 border border-cyan-200 rounded-xl text-sm font-medium text-cyan-700 bg-white hover:bg-cyan-50 hover:border-cyan-300 transition-all"
                 >
-                  <FaDownload /> Report
-                </Button>
+                  <FaDownload size={12} />
+                  Report
+                </button>
               </div>
             </div>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
 
         {isExpanded && (
-          <div className="ms-3 mt-2">
+          <div className="ml-6 mt-3">
             {Object.entries(semesters).map(([semesterName, subjects]) =>
               renderSemester(semesterName, subjects, yearPath, semesterType)
             )}
@@ -284,38 +297,35 @@ function FacultyPayments() {
     }, 0);
 
     return (
-      <div key={year} className="mb-4">
-        <Card className="shadow-sm border-0 rounded-4 bg-white">
-          <Card.Body className="p-4">
-            <div
-              className="d-flex justify-content-between align-items-center cursor-pointer"
-              onClick={() => toggleExpanded(yearPath)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="d-flex align-items-center gap-3">
+      <div key={year} className="mb-5">
+        <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+          <div
+            className="p-5 cursor-pointer hover:bg-gray-50 transition-colors rounded-2xl"
+            onClick={() => toggleExpanded(yearPath)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
                 {isExpanded ? (
-                  <FaChevronDown size={18} />
+                  <FaChevronDown size={18} className="text-gray-700" />
                 ) : (
-                  <FaChevronRight size={18} />
+                  <FaChevronRight size={18} className="text-gray-700" />
                 )}
                 <div>
-                  <h5 className="fw-bold mb-0">{year}</h5>
-                  <div className="text-muted small">
+                  <h5 className="font-bold text-gray-900 mb-1">{year}</h5>
+                  <div className="text-gray-600 text-sm">
                     {semesterTypeCount} Semester Type
                     {semesterTypeCount > 1 ? "s" : ""} • Total: ₹
                     {totalAmount.toLocaleString()}
                   </div>
                 </div>
               </div>
-              <div className="d-flex align-items-center gap-3">
-                <span className="badge bg-primary fs-6">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-base">
                   {semesterTypeCount}
                 </span>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  className="d-flex align-items-center gap-1"
-                  onClick={() => {
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     const facultyId = localStorage.getItem("facultyId");
                     if (!facultyId) {
                       console.error("❌ FacultyId missing in localStorage");
@@ -327,16 +337,18 @@ function FacultyPayments() {
                       "_blank"
                     );
                   }}
+                  className="flex items-center gap-2 px-4 py-2 border border-blue-200 rounded-xl text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-all"
                 >
-                  <FaDownload /> Yearly Report
-                </Button>
+                  <FaDownload size={12} />
+                  Yearly Report
+                </button>
               </div>
             </div>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
 
         {isExpanded && (
-          <div className="ms-3 mt-3">
+          <div className="ml-6 mt-4">
             {Object.entries(yearData).map(([semesterType, semesters]) =>
               renderSemesterType(semesterType, semesters, yearPath)
             )}
@@ -347,153 +359,169 @@ function FacultyPayments() {
   };
 
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Mobile Hamburger Header */}
-      <div className="d-flex d-md-none align-items-center mb-3">
-        <Button
-          variant="outline-primary"
-          className="me-2"
-          onClick={handleSidebarOpen}
-        >
-          <FaBars size={20} />
-        </Button>
-        <h5 className="mb-0 fw-bold">Faculty Payments</h5>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Mobile Sidebar */}
+        <FacultyMobileSidebar 
+          handleSidebarClose = {handleSidebarClose} 
+          showSidebar = {showSidebar} 
+        />
 
-      <Row>
-        {/* Sidebar: Offcanvas for mobile */}
-        <Offcanvas
-          show={showSidebar}
-          onHide={handleSidebarClose}
-          className="d-md-none"
-          backdrop
-        >
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            <FacultySidebar />
-            <div className="text-muted small mt-4">Role: Faculty Member</div>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        {/* Sidebar: static for desktop */}
-        <Col md={3} className="d-none d-md-block">
-          <Card
-            className="shadow-sm border-0 rounded-4 p-3 sticky-top"
-            style={{ minHeight: "90vh" }}
-          >
-            <FacultySidebar />
-            <div className="text-muted small mt-4">Role: Faculty Member</div>
-          </Card>
-        </Col>
+        {/* Desktop Sidebar */}
+        <FacultyDesktopSidebar />
 
         {/* Main Content */}
-        <Col md={9}>
-          <div className="d-none d-md-block">
-            <h2 className="mb-2 fw-bold">Faculty Payments</h2>
-            <hr className="mb-4" />
+        <div className="flex-1 overflow-auto">
+          {/* Header */}
+          <AdminNavbar
+            handleSidebarOpen={handleSidebarOpen}
+            page="Payments"
+            desc="Track and manage your payment history"
+          />
+
+          <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {/* Payment Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium mb-1">
+                      Total Earned
+                    </p>
+                    {loading ? (
+                      <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
+                    ) : (
+                      <p className="text-3xl font-bold">₹82,500</p>
+                    )}
+                  </div>
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <FaMoneyBillWave className="text-3xl opacity-90" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-emerald-100 text-sm font-medium mb-1">
+                      Completed
+                    </p>
+                    {loading ? (
+                      <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
+                    ) : (
+                      <p className="text-3xl font-bold">₹42,250</p>
+                    )}
+                  </div>
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <FaHistory className="text-3xl opacity-90" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-500 to-gray-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-100 text-sm font-medium mb-1">
+                      Pending
+                    </p>
+                    {loading ? (
+                      <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
+                    ) : (
+                      <p className="text-3xl font-bold">₹37,750</p>
+                    )}
+                  </div>
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <FaHistory className="text-3xl opacity-90" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment History Section */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+                  Payment History
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Click on arrows to expand and view detailed payment
+                  information by year, semester, and subject
+                </p>
+              </div>
+
+              {/* Tabs */}
+              <div className="px-6 pt-4 border-b border-gray-200">
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => setActiveTab("all")}
+                    className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
+                      activeTab === "all"
+                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("paid")}
+                    className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
+                      activeTab === "paid"
+                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Paid
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("unpaid")}
+                    className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
+                      activeTab === "unpaid"
+                        ? "bg-white text-blue-600 border-t-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Unpaid
+                  </button>
+                </div>
+              </div>
+
+              {/* Hierarchical Payment Data */}
+              <div className="p-6">
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="h-20 bg-gray-100 rounded-xl animate-pulse"
+                      ></div>
+                    ))}
+                  </div>
+                ) : Object.keys(paymentData).length > 0 ? (
+                  Object.entries(paymentData).map(([year, yearData]) =>
+                    renderYear(year, yearData)
+                  )
+                ) : (
+                  <div className="text-center py-12">
+                    <FaMoneyBillWave className="mx-auto h-12 w-12 text-gray-400 mb-4 opacity-50" />
+                    <p className="text-sm text-gray-500">
+                      No payment data available
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="d-md-none mb-3" />
 
-          {/* Payment Summary Cards */}
-          <Row className="mb-4">
-            <Col md={3} className="mb-3">
-              <Card className="shadow-sm border-0 rounded-4 bg-white">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center">
-                    <div className="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
-                      <FaMoneyBillWave size={24} className="text-primary" />
-                    </div>
-                    <div>
-                      <h6 className="text-muted mb-1">Total Earned</h6>
-                      <h4 className="fw-bold mb-0">₹82,500</h4>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={3} className="mb-3">
-              <Card className="shadow-sm border-0 rounded-4 bg-white">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center">
-                    <div className="bg-success bg-opacity-10 p-3 rounded-3 me-3">
-                      <FaHistory size={24} className="text-success" />
-                    </div>
-                    <div>
-                      <h6 className="text-muted mb-1">Completed</h6>
-                      <h4 className="fw-bold mb-0">₹42,250</h4>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col md={3} className="mb-3">
-              <Card className="shadow-sm border-0 rounded-4 bg-white">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center">
-                    <div className="bg-secondary bg-opacity-10 p-3 rounded-3 me-3">
-                      <FaHistory size={24} className="text-secondary" />
-                    </div>
-                    <div>
-                      <h6 className="text-muted mb-1">Pending</h6>
-                      <h4 className="fw-bold mb-0">₹37,750</h4>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Hierarchical Payment Structure */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-1">Payment History</h5>
-            <small className="text-muted mb-3 d-block">
-              Click on arrows to expand and view detailed payment information by
-              year, semester, and subject.
-            </small>
-
-            <Nav
-              variant="tabs"
-              activeKey={activeTab}
-              onSelect={(k) => setActiveTab(k)}
-              className="mb-4"
-            >
-              <Nav.Item>
-                <Nav.Link eventKey="paid" className="fw-bold">
-                  Paid
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link eventKey="unpaid" className="fw-bold">
-                  Unpaid
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link eventKey="all" className="fw-bold">
-                  All
-                </Nav.Link>
-              </Nav.Item>
-            </Nav>
-
-            {/* Hierarchical Structure */}
-            {Object.entries(paymentData).map(([year, yearData]) =>
-              renderYear(year, yearData)
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Footer */}
-      <footer className="text-center text-muted mt-4 small">
-        <hr />
-        <div>
-          Role: <span className="fw-bold">Faculty</span> &nbsp;|&nbsp; &copy;{" "}
-          {new Date().getFullYear()} Rizvi College of Engineering
+          {/* Footer */}
+          <footer className="text-center text-gray-500 text-sm py-6 border-t border-gray-200 mt-8">
+            <div className="px-4 sm:px-6 lg:px-8">
+              Role: <span className="font-bold text-gray-900">Faculty</span> | ©{" "}
+              {new Date().getFullYear()} Rizvi College of Engineering
+            </div>
+          </footer>
         </div>
-      </footer>
-    </Container>
+      </div>
+    </div>
   );
 }
 

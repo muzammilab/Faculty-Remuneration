@@ -1,37 +1,38 @@
 import { useEffect, useState } from "react";
-import { Container, Row, Col, Table, Button, Card, Badge, Spinner, Alert } from "react-bootstrap";
-import { FaPrint, FaFileInvoiceDollar, FaDownload, FaEye, FaCalculator, FaMoneyBillWave, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
+import { FaPrint, FaFileInvoiceDollar, FaCalculator, FaMoneyBillWave, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
+import FacultySidebar from "./FacultySidebar";
 import axios from "axios";
-/* import api from "../../../utils/api"; */
 
 function SubjectRemuneration() {
-  const { id, subjectId , academicYear} = useParams(); // id = facultyId
+  const { id, subjectId, academicYear } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [subjectData, setSubjectData] = useState([]);
+  const [subjectData, setSubjectData] = useState(null);
 
   useEffect(() => {
     const facultyId = localStorage.getItem("facultyId");
     const fetchFacultyDetails = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:3002/admin/payment/getSinglePayment/${facultyId}/${subjectId}/${academicYear}`);
-        console.log("Fetched Subject Payments for SubjectRemuneration page for Faculty :");
+        const res = await axios.get(
+          `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}/${subjectId}/${academicYear}`
+        );
+        console.log(
+          "Fetched Subject Payments for SubjectRemuneration page for Faculty :"
+        );
         console.log(res.data);
-        
-        // Extract single subject breakdown from API
-        const breakdownItem = res.data.breakdown[0]; // Only 1 because subjectId was passed
 
-        // Prepare frontend structure
+        const breakdownItem = res.data.breakdown[0];
+
         setSubjectData({
           facultyName: res.data.facultyName,
           department: res.data.department,
           subjectName: breakdownItem.subjectName,
           academicYear: breakdownItem.academicYear,
-          semesterType: breakdownItem.semesterType, 
+          semesterType: breakdownItem.semesterType,
           semester: breakdownItem.semester,
           total: breakdownItem.subjectTotal,
           referenceNumber: `REF-${Date.now()}`,
@@ -41,21 +42,21 @@ function SubjectRemuneration() {
               rate: breakdownItem.termTestAssessment.rate,
               quantity: breakdownItem.termTestAssessment.count,
               amount: breakdownItem.termTestAssessment.amount,
-              color: "primary",
+              color: "blue",
             },
             {
               component: "Oral/Practicals",
               rate: breakdownItem.oralPracticalAssessment.rate,
               quantity: breakdownItem.oralPracticalAssessment.count,
               amount: breakdownItem.oralPracticalAssessment.amount,
-              color: "success",
+              color: "emerald",
             },
             {
               component: "Semester Papers Assessed",
               rate: breakdownItem.paperChecking.rate,
               quantity: breakdownItem.paperChecking.count,
               amount: breakdownItem.paperChecking.amount,
-              color: "info",
+              color: "cyan",
             },
           ],
         });
@@ -70,273 +71,284 @@ function SubjectRemuneration() {
     };
 
     fetchFacultyDetails();
-  }, [id, subjectId]);
+  }, [id, subjectId, academicYear]);
 
   const handleGoBack = () => {
     navigate(`/faculty/payments`);
   };
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="p-4">
-        <Alert variant="danger">{error}</Alert>
-        <Button variant="secondary" onClick={handleGoBack}>
-          <FaArrowLeft /> Back
-        </Button>
-      </Container>
-    );
-  }
-
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Desktop Header */}
-      <div className="d-none d-md-flex d-flex justify-content-between align-items-center mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Button
-            variant="outline-secondary"
-            className="d-flex align-items-center gap-2"
-            onClick={handleGoBack}
-          >
-            <FaArrowLeft /> Back
-          </Button>
-          <div>
-            <h2 className="mb-1 fw-bold">Remuneration Details</h2>
-            <p className="text-muted mb-0">
-              Detailed breakdown of remuneration for the subject
-            </p>
-          </div>
-        </div>
-        {/* <div className="d-flex gap-2">
-          <Button
-            variant="outline-primary"
-            className="d-flex align-items-center gap-2"
-          >
-            <FaDownload /> Export
-          </Button>
-          <Button variant="primary" className="d-flex align-items-center gap-2">
-            <FaPrint /> Print
-          </Button>
-        </div> */}
-      </div>
-
-      {/* Mobile Header */}
-      <div className="d-md-none d-flex justify-content-between align-items-center mb-4">
-        <div className="d-flex align-items-center gap-3">
-          <Button
-            variant="outline-secondary"
-            className="d-flex align-items-center gap-2"
-            onClick={handleGoBack}
-          >
-            <FaArrowLeft /> Back
-          </Button>
-          <div>
-            <h3 className="mb-1 fw-bold">Remuneration Details</h3>
-          </div>
-        </div>
-        {/* <div className="d-flex flex-column gap-2">
-          <Button
-            variant="outline-primary"
-            className="d-flex align-items-center gap-2"
-          >
-            <FaDownload /> Export
-          </Button>
-          <Button variant="primary" className="d-flex align-items-center gap-2">
-            <FaPrint /> Print
-          </Button>
-        </div> */}
-      </div>
-
-      {/* Subject Information Card */}
-      <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div className="bg-primary bg-opacity-10 p-3 rounded-3">
-            <FaCalculator className="text-primary" size={24} />
-          </div>
-          <div>
-            <h5 className="fw-bold mb-1">Subject Information</h5>
-            <small className="text-muted">
-              Basic details about the subject and faculty
-            </small>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex md:flex-shrink-0">
+          <div className="w-72 bg-gradient-to-b from-white to-slate-50 border-r border-gray-200">
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto p-6">
+                <FacultySidebar />
+              </div>
+              <div className="p-6 border-t border-gray-200 bg-white/60 backdrop-blur">
+                <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                  Role
+                </div>
+                <div className="text-sm text-gray-900 mt-1 font-medium">
+                  Faculty Member
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Row>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Subject Name</span>
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {/* Back Button */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleGoBack}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+              >
+                <FaArrowLeft size={14} />
+                Back to Payments
+              </button>
             </div>
-            <h6 className="fw-bold mb-0">{subjectData.subjectName}</h6>
-          </Col>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Academic Year</span>
-            </div>
-            <h6 className="fw-bold mb-0">{subjectData.academicYear}</h6>
-          </Col>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Semester Type</span>
-            </div>
-            <h6 className="fw-bold mb-0">{subjectData.semesterType}</h6>
-          </Col>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Semester</span>
-            </div>
-            <Badge bg="info" className="px-3 py-2 fs-6">
-              Semester {subjectData.semester}
-            </Badge>
-          </Col>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Faculty Member</span>
-            </div>
-            <h6 className="fw-bold mb-0">{subjectData.facultyName}</h6>
-          </Col>
-          <Col md={6} className="mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">Department</span>
-            </div>
-            <h6 className="fw-bold mb-0">{subjectData.department}</h6>
-          </Col>
-        </Row>
-      </Card>
 
-      {/* Remuneration Breakdown Card */}
-      <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div className="bg-success bg-opacity-10 p-3 rounded-3">
-            <FaMoneyBillWave className="text-success" size={24} />
-          </div>
-          <div>
-            <h5 className="fw-bold mb-1">Remuneration Breakdown</h5>
-            <small className="text-muted">
-              Detailed calculation of each component
-            </small>
-          </div>
-        </div>
-
-        <Table bordered hover responsive striped className="mt-3 align-middle">
-          <thead className="table-light">
-            <tr>
-              <th className="fw-bold">Component</th>
-              <th className="fw-bold text-center">Rate (₹)</th>
-              <th className="fw-bold text-center">Quantity</th>
-              <th className="fw-bold text-center">Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjectData.breakdown.map((item, index) => (
-              <tr key={index}>
-                <td className="fw-medium">
-                  <div className="d-flex align-items-center gap-2">
-                    <div
-                      className={`bg-${item.color} bg-opacity-10 p-2 rounded-2`}
-                    >
-                      <FaCalculator
-                        className={`text-${item.color}`}
-                        size={14}
-                      />
-                    </div>
-                    {item.component}
+            {loading ? (
+              // Loading State
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-semibold">
+                    Loading remuneration details...
+                  </p>
+                </div>
+              </div>
+            ) : error ? (
+              // Error State
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <FaInfoCircle className="text-red-600" size={20} />
                   </div>
-                </td>
-                <td className="text-center">
-                  <Badge bg="secondary" className="px-3 py-2">
-                    ₹{item.rate}
-                  </Badge>
-                </td>
-                <td className="text-center fw-bold">{item.quantity}</td>
-                <td className="text-center">
-                  <span className="fw-bold text-success">
-                    ₹{item.amount.toLocaleString()}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card>
+                  <div>
+                    <h3 className="text-red-900 font-semibold">
+                      Error Loading Data
+                    </h3>
+                    <p className="text-red-700 text-sm mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Subject Information Card */}
+                <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <FaCalculator className="text-blue-600" size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+                          Subject Information
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Basic details about the subject and faculty
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Total Remuneration Card */}
-      <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div className="bg-warning bg-opacity-10 p-3 rounded-3">
-            <FaFileInvoiceDollar className="text-warning" size={24} />
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Subject Name
+                          </span>
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {subjectData?.subjectName}
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Academic Year
+                          </span>
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {subjectData?.academicYear}
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Semester Type
+                          </span>
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {subjectData?.semesterType}
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Semester
+                          </span>
+                        </div>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-800 border border-cyan-200">
+                          Semester {subjectData?.semester}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Faculty Member
+                          </span>
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {subjectData?.facultyName}
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaInfoCircle className="text-gray-400" size={14} />
+                          <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                            Department
+                          </span>
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {subjectData?.department}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remuneration Breakdown Card */}
+                <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                        <FaMoneyBillWave
+                          className="text-emerald-600"
+                          size={20}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+                          Remuneration Breakdown
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Detailed calculation of each component
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Component
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Rate (₹)
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Quantity
+                          </th>
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Amount (₹)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {subjectData?.breakdown.map((item, index) => (
+                          <tr
+                            key={index}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-10 h-10 bg-${item.color}-50 rounded-xl flex items-center justify-center`}
+                                >
+                                  <FaCalculator
+                                    className={`text-${item.color}-600`}
+                                    size={16}
+                                  />
+                                </div>
+                                <span className="font-medium text-gray-900">
+                                  {item.component}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                ₹{item.rate}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="font-bold text-gray-900">
+                                {item.quantity}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="font-bold text-emerald-600">
+                                ₹{item.amount.toLocaleString()}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Total Remuneration Card */}
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-8 rounded-2xl shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                        <FaFileInvoiceDollar className="text-4xl opacity-90" />
+                      </div>
+                      <div>
+                        <p className="text-emerald-100 text-sm font-medium mb-1">
+                          Total Remuneration
+                        </p>
+                        <h2 className="text-4xl font-bold">
+                          ₹{subjectData?.total.toLocaleString()}
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-          <div>
-            <h5 className="fw-bold mb-1">Payment Summary</h5>
-            <small className="text-muted">
-              Final calculation and payment details
-            </small>
-          </div>
-        </div>
 
-        <Row className="align-items-end">
-          {/* Display Of Reference Number
-          <Col md={6}>
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <FaInfoCircle className="text-muted" size={16} />
-              <span className="text-muted small fw-medium">
-                Reference Number
-              </span>
+          {/* Footer */}
+          <footer className="text-center text-gray-500 text-sm py-6 border-t border-gray-200 mt-8">
+            <div className="px-4 sm:px-6 lg:px-8">
+              Role: <span className="font-bold text-gray-900">Faculty</span> | ©{" "}
+              {new Date().getFullYear()} Rizvi College of Engineering
             </div>
-            <h6 className="fw-bold mb-0 text-primary">
-              {subjectData.referenceNumber}
-            </h6>
-          </Col> 
-          */}
-
-          <Col md={6} className="text-md-end">
-            <div className="d-flex align-items-center gap-2 mb-2 justify-content-md-end">
-              <FaMoneyBillWave className="text-success" size={16} />
-              <span className="text-muted small fw-medium">
-                Total Remuneration
-              </span>
-            </div>
-            <h3 className="fw-bold text-success mb-0">
-              ₹{subjectData.total.toLocaleString()}
-            </h3>
-          </Col>
-        </Row>
-
-        {/* Buttons
-         <div className="d-flex justify-content-end gap-3 mt-4">
-          <Button
-            variant="outline-secondary"
-            className="d-flex align-items-center gap-2"
-          >
-            <FaEye /> View Details
-          </Button>
-          <Button variant="success" className="d-flex align-items-center gap-2">
-            <FaFileInvoiceDollar /> Generate Invoice
-          </Button>
-        </div> */}
-      </Card>
-
-      {/* Footer */}
-      <footer className="text-center text-muted mt-4 small">
-        <hr />
-        <div>
-          Role: <span className="fw-bold">Admin</span> &nbsp;|&nbsp; &copy;{" "}
-          {new Date().getFullYear()} Rizvi College of Engineering
+          </footer>
         </div>
-      </footer>
-    </Container>
+      </div>
+    </div>
   );
 }
 

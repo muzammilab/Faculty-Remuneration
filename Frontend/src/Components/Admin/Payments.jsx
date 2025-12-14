@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
-import {
-  Form,
-  Button,
-  Table,
-  Row,
-  Col,
-  Container,
-  Card,
-  InputGroup,
-  Offcanvas,
-} from "react-bootstrap";
-import { FaSave, FaSyncAlt, FaFileInvoiceDollar, FaBars } from "react-icons/fa";
-import AdminSidebar from "../AdminSidebar";
-import axios from "axios";
+import { FaSave, FaSyncAlt, FaUser, FaDollarSign, FaBook, FaCheckCircle } from "react-icons/fa";
+import AdminSidebar from "./AdminSidebar";
+import AdminNavbar from "./AdminNavbar";
+import AdminMobileSidebar from "./AdminMobileSidebar";
 import api from "../../utils/api";
+import axios from "axios";
+import AdminDesktopSidebar from "./AdminDesktopSidebar";
 
 function Payments() {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -376,19 +368,8 @@ function Payments() {
         facultyId: selectedFaculty,
         academicYear: semesterObj.academicYear, // ✅ send Year
         semesterType: semesterObj.semesterType, // ✅ send Odd/Even
-        /* baseSalary,
-        travelAllowance, */
         subjectBreakdown: uniqueSubjectBreakdown,
-        /* totalRemuneration,
-        totalAmount, */
       };
-
-      /* const paymentData = {
-        facultyId: selectedFaculty,
-        semester: parseInt(selectedSemester),
-        academicYear: academicYear,
-        subjectBreakdown: uniqueSubjectBreakdown,
-      }; */
 
       console.log("Sending final payment data:", paymentData);
       const response = await axios.post(
@@ -418,240 +399,223 @@ function Payments() {
     }
   };
 
+
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Mobile Hamburger Header */}
-      <div className="d-flex d-md-none align-items-center mb-3">
-        <Button
-          variant="outline-primary"
-          className="me-2"
-          onClick={handleSidebarOpen}
-        >
-          <FaBars size={20} />
-        </Button>
-        <h5 className="mb-0 fw-bold">Faculty Payments</h5>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Mobile Sidebar */}
+        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
 
-      <Row>
-        {/* Sidebar: Offcanvas for mobile */}
-        <Offcanvas
-          show={showSidebar}
-          onHide={handleSidebarClose}
-          className="d-md-none"
-          backdrop
-        >
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        {/* Sidebar: static for desktop */}
-        <Col md={3} className="d-none d-md-block">
-          <Card
-            className="shadow-sm border-0 rounded-4 p-3 sticky-top"
-            style={{ minHeight: "90vh" }}
-          >
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Card>
-        </Col>
+        {/* Desktop Sidebar */}
+        <AdminDesktopSidebar />
 
         {/* Main Content */}
-        <Col md={9}>
-          <div className="d-none d-md-block">
-            <h2 className="mb-2 fw-bold">Faculty Payments</h2>
-            <hr className="mb-4" />
-          </div>
-          <div className="d-md-none mb-3" />
+        <div className="flex-1 overflow-auto">
+          <AdminNavbar
+            handleSidebarOpen={handleSidebarOpen}
+            page="Faculty Payments"
+            desc="Calculate and process faculty remuneration"
+          />
 
-          {/* Initiate Payments */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <h5 className="fw-bold mb-1">Initiate Payments</h5>
-                <small className="text-muted d-block">
-                  Start a new payment process for faculty members.
-                </small>
-              </div>
-              {loading && (
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+          <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {/* Initiate Payments Card */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+                      <FaUser className="text-blue-600" />
+                      Initiate Payments
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Start a new payment process for faculty members
+                    </p>
+                  </div>
+                  {loading && (
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
 
-            <Row className="mb-3">
-              <Col md={4} className="mb-3 mb-md-0">
-                <Form.Group>
-                  <Form.Label>Select Faculty</Form.Label>
-                  <Form.Select
-                    value={selectedFaculty}
-                    onChange={(e) => handleFacultyChange(e.target.value)}
-                    disabled={loading}
-                  >
-                    <option value="">Choose...</option>
-                    {facultyList.map((faculty) => (
-                      <option key={faculty._id} value={faculty._id}>
-                        {faculty.name} - {faculty.designation}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Select Semester</Form.Label>
-                  <Form.Select
-                    value={selectedSemester}
-                    onChange={(e) => handleSemesterChange(e.target.value)}
-                    disabled={!selectedFaculty || loading}
-                  >
-                    <option value="">Choose...</option>
-                    {semesters.map((semester) => (
-                      <option
-                        key={semester.label}
-                        value={JSON.stringify(semester)}
-                      >
-                        {semester.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Academic Year</Form.Label>
-                  <Form.Control
-                    type="string"
-                    value={
-                      selectedSemester && selectedSemester !== ""
-                        ? JSON.parse(selectedSemester).academicYear
-                        : ""
-                    }
-                    onChange={(e) => setAcademicYear(e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row className="mb-3">
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Subjects Assigned</Form.Label>
-                  <div className="d-flex flex-wrap gap-2 p-2 border rounded">
-                    {getSubjectsDisplay()
-                      .split(", ")
-                      .map((subject, index) => (
-                        <div
-                          key={index}
-                          className="card p-2 shadow-sm"
-                          style={{ minWidth: "120px" }}
-                        >
-                          {subject}
-                        </div>
+              <div className="p-6 space-y-6">
+                {/* Faculty, Semester, Academic Year */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Faculty
+                    </label>
+                    <select
+                      value={selectedFaculty}
+                      onChange={(e) => handleFacultyChange(e.target.value)}
+                      disabled={loading}
+                      className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors disabled:opacity-50"
+                    >
+                      <option value="">Choose...</option>
+                      {facultyList.map((faculty) => (
+                        <option key={faculty._id} value={faculty._id}>
+                          {faculty.name} - {faculty.designation}
+                        </option>
                       ))}
+                    </select>
                   </div>
-                </Form.Group>
-              </Col>
-            </Row>
-            {/* <Row className="mb-3">
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Subjects Assigned</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={getSubjectsDisplay()}
-                    disabled
-                  />
-                </Form.Group>
-              </Col>
-            </Row> */}
 
-            <Row className="mb-3">
-              {/* <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Base Salary</Form.Label>
-                  <InputGroup>
-                    <InputGroup.Text>₹</InputGroup.Text>
-                    <Form.Control
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Semester
+                    </label>
+                    <select
+                      value={selectedSemester}
+                      onChange={(e) => handleSemesterChange(e.target.value)}
+                      disabled={!selectedFaculty || loading}
+                      className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors disabled:opacity-50"
+                    >
+                      <option value="">Choose...</option>
+                      {semesters.map((semester) => (
+                        <option
+                          key={semester.label}
+                          value={JSON.stringify(semester)}
+                        >
+                          {semester.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Academic Year
+                    </label>
+                    <input
                       type="text"
                       value={
-                        facultyData
-                          ? facultyData.baseSalary?.toLocaleString()
-                          : "0"
+                        selectedSemester && selectedSemester !== ""
+                          ? JSON.parse(selectedSemester).academicYear
+                          : ""
                       }
-                      disabled
+                      onChange={(e) => setAcademicYear(e.target.value)}
+                      className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50"
                     />
-                  </InputGroup>
-                </Form.Group>
-              </Col> */}
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Travel Allowance</Form.Label>
-                  <InputGroup>
-                    <InputGroup.Text>₹</InputGroup.Text>
-                    <Form.Control
-                      type="text"
-                      value={
-                        facultyData
-                          ? facultyData.travelAllowance?.toLocaleString()
-                          : "0"
-                      }
-                      disabled
-                    />
-                  </InputGroup>
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Department</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={facultyData ? facultyData.department : ""}
-                    disabled
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            {/* Remuneration Calculation */}
-            <div className="border-top pt-3 mt-4 mb-2">
-              <h5 className="fw-bold mb-1">Remuneration Calculation</h5>
-              <small className="text-muted mb-3 d-block">
-                Calculate remuneration for each subject.
-                {selectedSubjectDetails && (
-                  <div className="mt-2">
-                    <span className="badge bg-info me-2">
-                      {selectedSubjectDetails.hasTermTest
-                        ? "✓ Term Work"
-                        : "✗ Term Work"}
-                    </span>
-                    <span className="badge bg-info me-2">
-                      {selectedSubjectDetails.hasPractical
-                        ? "✓ Practical"
-                        : "✗ Practical"}
-                    </span>
-                    <span className="badge bg-info">
-                      {selectedSubjectDetails.hasSemesterExam
-                        ? "✓ Semester Exam"
-                        : "✗ Semester Exam"}
-                    </span>
                   </div>
-                )}
-              </small>
+                </div>
+
+                {/* Subjects Assigned */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subjects Assigned
+                  </label>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50 min-h-[60px]">
+                    {subjects.length === 0 ? (
+                      <span className="text-sm text-gray-500">
+                        No subjects assigned
+                      </span>
+                    ) : (
+                      subjects.map((subject, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                        >
+                          {subject.name}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Travel Allowance & Department */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Travel Allowance
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        ₹
+                      </span>
+                      <input
+                        type="text"
+                        value={
+                          facultyData
+                            ? facultyData.travelAllowance?.toLocaleString()
+                            : "0"
+                        }
+                        disabled
+                        className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      value={facultyData ? facultyData.department : ""}
+                      disabled
+                      className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Select Subject</Form.Label>
-                  <Form.Select
+
+            {/* Remuneration Calculation Card */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+                  <FaDollarSign className="text-emerald-600" />
+                  Remuneration Calculation
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Calculate remuneration for each subject
+                  {selectedSubjectDetails && (
+                    <span className="flex gap-2 mt-2">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasTermTest
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"} Term
+                        Work
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasPractical
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasPractical ? "✓" : "✗"}{" "}
+                        Practical
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasSemesterExam
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasSemesterExam ? "✓" : "✗"}{" "}
+                        Semester Exam
+                      </span>
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Select Subject */}
+                <div className="md:w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Subject
+                  </label>
+                  <select
                     value={selectedSubject}
                     onChange={(e) => handleSubjectChange(e.target.value)}
                     disabled={!selectedSemester || subjects.length === 0}
+                    className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors disabled:opacity-50"
                   >
                     <option value="">Choose...</option>
                     {subjects.map((subject, index) => (
@@ -659,321 +623,339 @@ function Payments() {
                         {subject.name}
                       </option>
                     ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
+                  </select>
+                </div>
 
-            {/* Term Work Assessment - Only show if subject has term test */}
-            {selectedSubjectDetails?.hasTermTest &&
-              facultyData.designation !== "External Examiner" && (
-                <Row className="mb-3">
-                  <Col md={3}>
-                    <Form.Group>
-                      <Form.Label>No. of Term Work Papers</Form.Label>
-                      <Form.Control
-                        type="number"
-                        value={termWorkPapers}
-                        onChange={(e) => setTermWorkPapers(e.target.value)}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={3}>
-                    <Form.Group>
-                      <Form.Label>Rate per Paper</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>₹</InputGroup.Text>
-                        <Form.Control
+                {/* Term Work Assessment */}
+                {selectedSubjectDetails?.hasTermTest &&
+                  facultyData?.designation !== "External Examiner" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          No. of Term Work Papers
+                        </label>
+                        <input
                           type="number"
-                          value={termWorkRate}
-                          onChange={(e) => setTermWorkRate(e.target.value)}
+                          value={termWorkPapers}
+                          onChange={(e) => setTermWorkPapers(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
                         />
-                      </InputGroup>
-                    </Form.Group>
-                  </Col>
-                </Row>
-              )}
-
-            {/* Oral/Practical Assessment - Only show if subject has practical */}
-            {selectedSubjectDetails?.hasPractical && (
-              <Row className="mb-3">
-                <Col md={3}>
-                  <Form.Group>
-                    <Form.Label>Oral/Practical Papers</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={oralPapers}
-                      onChange={(e) => setOralPapers(e.target.value)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group>
-                    <Form.Label>Rate per Paper</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text>₹</InputGroup.Text>
-                      <Form.Control
-                        type="number"
-                        value={oralRate}
-                        onChange={(e) => setOralRate(e.target.value)}
-                      />
-                    </InputGroup>
-                  </Form.Group>
-                </Col>
-              </Row>
-            )}
-
-            {/* Semester Papers - Only show if subject has semester exam */}
-            {selectedSubjectDetails?.hasSemesterExam &&
-              facultyData.designation !== "External Examiner" && (
-                <Row className="mb-3">
-                  <Col md={3}>
-                    <Form.Group>
-                      <Form.Label>Semester Papers</Form.Label>
-                      <Form.Control
-                        type="number"
-                        value={semesterPapers}
-                        onChange={(e) => setSemesterPapers(e.target.value)}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={3}>
-                    <Form.Group>
-                      <Form.Label>Rate per Paper</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>₹</InputGroup.Text>
-                        <Form.Control
-                          type="number"
-                          value={semesterRate}
-                          onChange={(e) => setSemesterRate(e.target.value)}
-                        />
-                      </InputGroup>
-                    </Form.Group>
-                  </Col>
-                </Row>
-              )}
-
-            {/* Calculated Total - Always show */}
-            <Row className="mb-3">
-              <Col md={6} className="d-flex align-items-end">
-                <Form.Group className="w-100">
-                  <Form.Label>Calculated Total</Form.Label>
-                  <Form.Control type="text" value={totalPayment} disabled />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            {/* Add Subject Button */}
-            <div className="d-flex justify-content-end">
-              <Button
-                variant="success"
-                className="px-4 py-2 fw-bold d-flex align-items-center gap-2"
-                onClick={handleSavePayment}
-                disabled={!selectedSubject || loading}
-              >
-                <FaSave /> Add Subject to Calculation
-              </Button>
-            </div>
-          </Card>
-
-          {/* Calculated Remunerations */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-1">Calculated Remunerations</h5>
-            <small className="text-muted mb-3 d-block">
-              Review calculated remunerations for each subject.
-            </small>
-            <Table
-              bordered
-              hover
-              responsive
-              striped
-              className="mt-3 align-middle"
-            >
-              <thead className="table-light">
-                <tr>
-                  <th>Subject</th>
-                  <th>Semester</th>
-                  {calculatedRemunerations.some(
-                    (r) => r.termWorkPapers > 0
-                  ) && <th>Term Work Papers</th>}
-                  {calculatedRemunerations.some((r) => r.oralPapers > 0) && (
-                    <th>Oral/Practical Papers</th>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rate per Paper
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            value={termWorkRate}
+                            onChange={(e) => setTermWorkRate(e.target.value)}
+                            className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  {calculatedRemunerations.some(
-                    (r) => r.semesterPapers > 0
-                  ) && <th>Semester Papers</th>}
-                  <th>Total Payment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calculatedRemunerations.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="text-center text-muted">
-                      No remunerations calculated yet. Click "Add Subject to
-                      Calculation" to add subjects.
-                    </td>
-                  </tr>
-                ) : (
-                  calculatedRemunerations.map((remuneration, index) => (
-                    <tr key={index}>
-                      <td>{remuneration.subjectName}</td>
-                      <td>
-                        <span className="badge bg-info text-dark">
-                          {remuneration.semesterLabel}
+
+                {/* Oral/Practical Assessment */}
+                {selectedSubjectDetails?.hasPractical && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Oral/Practical Papers
+                      </label>
+                      <input
+                        type="number"
+                        value={oralPapers}
+                        onChange={(e) => setOralPapers(e.target.value)}
+                        className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Rate per Paper
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                          ₹
                         </span>
-                      </td>
-                      {calculatedRemunerations.some(
-                        (r) => r.termWorkPapers > 0
-                      ) && (
-                        <td>
-                          {remuneration.termWorkPapers > 0 ? (
-                            <>
-                              {remuneration.termWorkPapers}{" "}
-                              <span className="badge bg-secondary ms-1">
-                                ₹{remuneration.termWorkRate}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                      )}
-                      {calculatedRemunerations.some(
-                        (r) => r.oralPapers > 0
-                      ) && (
-                        <td>
-                          {remuneration.oralPapers > 0 ? (
-                            <>
-                              {remuneration.oralPapers}{" "}
-                              <span className="badge bg-secondary ms-1">
-                                ₹{remuneration.oralRate}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                      )}
-                      {calculatedRemunerations.some(
-                        (r) => r.semesterPapers > 0
-                      ) && (
-                        <td>
-                          {remuneration.semesterPapers > 0 ? (
-                            <>
-                              {remuneration.semesterPapers}{" "}
-                              <span className="badge bg-secondary ms-1">
-                                ₹{remuneration.semesterRate}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                      )}
-
-                      <td className="fw-bold text-success">
-                        ₹{remuneration.totalPayment.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
+                        <input
+                          type="number"
+                          value={oralRate}
+                          onChange={(e) => setOralRate(e.target.value)}
+                          className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </Table>
-          </Card>
 
-          {/* Final Remuneration */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-1">Final Calculated Remuneration</h5>
-            <small className="text-muted mb-3 d-block">
-              Summary of all remuneration components.
-            </small>
-            <Table bordered responsive striped className="mt-3 align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th>Component</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Travel Allowance</td>
-                  <td>
-                    <span className="fw-bold text-primary">
+                {/* Semester Papers */}
+                {selectedSubjectDetails?.hasSemesterExam &&
+                  facultyData?.designation !== "External Examiner" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Semester Papers
+                        </label>
+                        <input
+                          type="number"
+                          value={semesterPapers}
+                          onChange={(e) => setSemesterPapers(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rate per Paper
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            value={semesterRate}
+                            onChange={(e) => setSemesterRate(e.target.value)}
+                            className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Calculated Total */}
+                {/* 
+                <div className="md:w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Calculated Total
+                  </label>
+                  <input
+                    type="text"
+                    value={`₹${totalPayment.toLocaleString()}`}
+                    disabled
+                    className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100 font-bold text-emerald-600"
+                  />
+                </div>  
+                */}
+
+                {/* Add Subject Button */}
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <button
+                    onClick={handleSavePayment}
+                    disabled={!selectedSubject || loading}
+                    className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
+                  >
+                    <FaSave />
+                    Add Subject to Calculation
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculated Remunerations Table */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+                  <FaBook className="text-blue-600" />
+                  Calculated Remunerations
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Review calculated remunerations for each subject
+                </p>
+              </div>
+
+              {calculatedRemunerations.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <FaDollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4 opacity-50" />
+                  <p className="text-sm text-gray-500">
+                    No remunerations calculated yet. Click "Add Subject to
+                    Calculation" to add subjects.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50/70">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Subject
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Semester
+                        </th>
+                        {calculatedRemunerations.some(
+                          (r) => r.termWorkPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Term Work
+                          </th>
+                        )}
+                        {calculatedRemunerations.some(
+                          (r) => r.oralPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Oral/Practical
+                          </th>
+                        )}
+                        {calculatedRemunerations.some(
+                          (r) => r.semesterPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Semester Papers
+                          </th>
+                        )}
+                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Total Payment
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white/60 divide-y divide-gray-100">
+                      {calculatedRemunerations.map((remuneration, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-blue-50/60 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                            {remuneration.subjectName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {remuneration.semesterLabel}
+                            </span>
+                          </td>
+                          {calculatedRemunerations.some(
+                            (r) => r.termWorkPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              {remuneration.termWorkPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.termWorkPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹{remuneration.termWorkRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          )}
+                          {calculatedRemunerations.some(
+                            (r) => r.oralPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              {remuneration.oralPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.oralPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹{remuneration.oralRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          )}
+                          {calculatedRemunerations.some(
+                            (r) => r.semesterPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              {remuneration.semesterPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.semesterPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹{remuneration.semesterRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          )}
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <span className="font-bold text-emerald-600 text-lg">
+                              ₹{remuneration.totalPayment.toLocaleString()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Final Remuneration Summary */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+                  <FaCheckCircle className="text-emerald-600" />
+                  Final Calculated Remuneration
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Summary of all remuneration components
+                </p>
+              </div>
+
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                    <span className="text-sm font-medium text-gray-700">
+                      Travel Allowance
+                    </span>
+                    <span className="font-bold text-blue-600 text-lg">
                       ₹
                       {facultyData
                         ? facultyData.travelAllowance?.toLocaleString()
                         : "0"}
                     </span>
-                  </td>
-                </tr>
-                {/* <tr>
-                  <td>Base Salary</td>
-                  <td>
-                    <span className="fw-bold text-primary">
-                      ₹
-                      {facultyData
-                        ? facultyData.baseSalary?.toLocaleString()
-                        : "0"}
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                    <span className="text-sm font-medium text-gray-700">
+                      Calculated Remuneration
                     </span>
-                  </td>
-                </tr> */}
-                <tr>
-                  <td>Calculated Remuneration</td>
-                  <td>
-                    <span className="fw-bold text-success">
+                    <span className="font-bold text-emerald-600 text-lg">
                       ₹
                       {calculatedRemunerations
                         .reduce((sum, item) => sum + item.totalPayment, 0)
                         .toLocaleString()}
                     </span>
-                  </td>
-                </tr>
-                <tr className="fw-bold table-success">
-                  <td>Total Remuneration</td>
-                  <td>
-                    ₹
-                    {(
-                      calculatedRemunerations.reduce(
-                        (sum, item) => sum + item.totalPayment,
-                        0
-                      ) +
-                      /* (facultyData ? facultyData.baseSalary || 0 : 0) + */
-                      (facultyData ? facultyData.travelAllowance || 0 : 0)
-                    ).toLocaleString()}
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+                    <span className="text-base font-bold text-gray-900">
+                      Total Remuneration
+                    </span>
+                    <span className="font-bold text-emerald-700 text-2xl">
+                      ₹
+                      {(
+                        calculatedRemunerations.reduce(
+                          (sum, item) => sum + item.totalPayment,
+                          0
+                        ) + (facultyData ? facultyData.travelAllowance || 0 : 0)
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="d-flex justify-content-end gap-3 mt-3">
-              <Button
-                variant="primary"
-                className="d-flex align-items-center gap-2"
-                onClick={handleUpdateFinalCalculation}
-                disabled={calculatedRemunerations.length === 0 || loading}
-              >
-                <FaSyncAlt /> Update Final Calculation
-              </Button>
-              {/* <Button
-                variant="outline-secondary"
-                className="d-flex align-items-center gap-2"
-              >
-                <FaFileInvoiceDollar /> Generate Payment Slip
-              </Button>  */}
+                <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
+                  <button
+                    onClick={handleUpdateFinalCalculation}
+                    disabled={calculatedRemunerations.length === 0 || loading}
+                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  >
+                    <FaSyncAlt />
+                    Update Final Calculation
+                  </button>
+                </div>
+              </div>
             </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Footer */}
-      <footer className="text-center text-muted mt-4 small">
-        <hr />
-        <div>
-          Role: <span className="fw-bold">Admin</span> &nbsp;|&nbsp; &copy;{" "}
-          {new Date().getFullYear()} Rizvi College of Engineering
+          </div>
         </div>
-      </footer>
-    </Container>
+      </div>
+    </div>
   );
 }
 

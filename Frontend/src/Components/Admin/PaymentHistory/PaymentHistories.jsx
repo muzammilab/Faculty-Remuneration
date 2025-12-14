@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Table, InputGroup, Form, Offcanvas, Button } from "react-bootstrap";
-import { FaSearch, FaBars } from "react-icons/fa";
-import AdminSidebar from "../../AdminSidebar";
+import { FaSearch, FaDollarSign, FaCalendar } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import AdminDesktopSidebar from "../AdminDesktopSidebar";
+import AdminMobileSidebar from "../AdminMobileSidebar";
+import AdminNavbar from "../AdminNavbar";
 import axios from "axios";
 
 function PaymentHistories() {
   const [showSidebar, setShowSidebar] = useState(false);
-  const handleSidebarOpen = () => setShowSidebar(true);
-  const handleSidebarClose = () => setShowSidebar(false);
   const navigate = useNavigate();
 
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterFaculty, setFilterFaculty] = useState("");
+
+  const handleSidebarOpen = () => setShowSidebar(true);
+  const handleSidebarClose = () => setShowSidebar(false);
 
   // Fetch all payments on component mount
   useEffect(() => {
@@ -28,9 +30,12 @@ function PaymentHistories() {
       const response = await axios.get(
         "http://localhost:3002/admin/payment/getAll"
       );
-      console.log("Fetched payments For Payment History Page : ");
-      console.log(response.data);
-      setPayments(response.data);
+      // Filter ONLY PAID payments
+      const paidPayments = response.data.filter((payment) => payment.status === "paid");
+
+      console.log("Fetched PAID payments For Payment History Page : ");
+      console.log(paidPayments);
+      setPayments(paidPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
       alert("Failed to fetch payment records");
@@ -41,183 +46,215 @@ function PaymentHistories() {
 
   // Filter payments based on search and filters
   const filteredPayments = payments.filter((payment) => {
-  const facultyName = payment.facultyId?.name?.toLowerCase() || "";
-  const designation = payment.facultyId?.designation?.toLowerCase() || "";
-  const academicYear = payment.academicYear?.toString().toLowerCase() || "";
-
-  const matchesSearch =
-    searchTerm === "" ||
-    facultyName.includes(searchTerm.toLowerCase()) ||
-    designation.includes(searchTerm.toLowerCase()) ||
-    academicYear.includes(searchTerm.toLowerCase());
-
-  const matchesFaculty =
-    filterFaculty === "" || payment.facultyId?._id === filterFaculty;
-
-  return matchesSearch && matchesFaculty;
-});
-
-  /* const filteredPayments = payments.filter((payment) => {
-    const facultyName = payment.facultyId.name.toLowerCase();
-    const designation = payment.facultyId.designation.toLowerCase(); // ADDed this
-    const academicYear = payment.academicYear.toString().toLowerCase(); // ADDed this
+    const facultyName = payment.facultyId?.name?.toLowerCase() || "";
+    const designation = payment.facultyId?.designation?.toLowerCase() || "";
+    const academicYear = payment.academicYear?.toString().toLowerCase() || "";
 
     const matchesSearch =
       searchTerm === "" ||
       facultyName.includes(searchTerm.toLowerCase()) ||
-      designation.includes(searchTerm.toLowerCase()) || // ADDed this
+      designation.includes(searchTerm.toLowerCase()) ||
       academicYear.includes(searchTerm.toLowerCase());
 
     const matchesFaculty =
-      filterFaculty === "" || payment.facultyId._id === filterFaculty;
+      filterFaculty === "" || payment.facultyId?._id === filterFaculty;
 
     return matchesSearch && matchesFaculty;
-  }); */
+  });
 
-  // For dynamicallly giving colors to status
+  // Status badge component - EXACT FacultyManagement style
   const getStatusBadge = (status) => {
-    const statusClass = {
-      paid: "bg-success text-white",
-      unpaid: "bg-warning text-dark",
-      Failed: "bg-danger text-white",
+    const statusConfig = {
+      paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      unpaid: "bg-amber-50 text-amber-700 border-amber-200",
+      Failed: "bg-red-50 text-red-700 border-red-200",
     };
+    const config =
+      statusConfig[status] || "bg-gray-50 text-gray-700 border-gray-200";
+
     return (
       <span
-        className={`badge rounded-pill px-3 py-2 ${
-          statusClass[status] || "bg-secondary"
-        }`}
+        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${config}`}
       >
-        {status.charAt(0).toUpperCase() + status.slice(1)}{" "}
-        {/* To Show data in Camel Case */}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Mobile Hamburger Header */}
-      <div className="d-flex d-md-none align-items-center mb-3">
-        <Button
-          variant="outline-primary"
-          className="me-2"
-          onClick={handleSidebarOpen}
-        >
-          <FaBars size={20} />
-        </Button>
-        <h5 className="mb-0 fw-bold">Payment History</h5>
-      </div>
-      <Row>
-        {/* Sidebar: Offcanvas for mobile */}
-        <Offcanvas
-          show={showSidebar}
-          onHide={handleSidebarClose}
-          className="d-md-none"
-          backdrop
-        >
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Offcanvas.Body>
-        </Offcanvas>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Mobile Sidebar */}
+        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
 
-        {/* Sidebar: static for desktop */}
-        <Col md={3} className="d-none d-md-block">
-          <Card
-            className="shadow-sm border-0 rounded-4 p-3 sticky-top"
-            style={{ minHeight: "90vh" }}
-          >
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Card>
-        </Col>
+        {/* Desktop Sidebar */}
+        <AdminDesktopSidebar />
 
         {/* Main Content */}
-        <Col md={9}>
-          <div className="d-none d-md-block">
-            <h2 className="mb-2 fw-bold">Payment History</h2>
-            <hr className="mb-4" />
+        <div className="flex-1 overflow-auto">
+          {/* Admin Navbar */}
+          <AdminNavbar
+            handleSidebarOpen={handleSidebarOpen}
+            page="Payment History"
+            desc="Complete payment records overview"
+          />
+
+          <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {/* Search Bar */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+              <div className="p-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaSearch className="text-gray-400" size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
+                        placeholder="Search by faculty name, academic year or designation"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Faculty Table */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm overflow-auto">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+                  Faculty Payment History
+                </h3>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  {filteredPayments.length}{" "}
+                  {filteredPayments.length === 1 ? "record" : "records"}
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="px-6 py-20 text-center">
+                  <div className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading payment data...
+                  </p>
+                </div>
+              ) : filteredPayments.length === 0 ? (
+                <div className="px-6 py-20 text-center">
+                  <FaDollarSign className="mx-auto h-16 w-16 text-gray-400 mb-4 opacity-50" />
+                  <p className="text-lg font-semibold text-gray-900 mb-2">
+                    No payments found
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {searchTerm
+                      ? "Try adjusting your search terms"
+                      : "No payment records available"}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50/70">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Faculty Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Designation
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Academic Year
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Semester
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Payment Date
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white/60 divide-y divide-gray-100">
+                      {filteredPayments.map((payment) => (
+                        <tr
+                          key={payment._id}
+                          className="hover:bg-blue-50/60 transition-colors cursor-default"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/admin/paymenthistory/details/${payment.facultyId._id}/${payment.academicYear}/${payment.semesterType}`
+                                )
+                              }
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                textAlign: "left",
+                              }}
+                            >
+                              {payment.facultyId?.name || payment.facultyName}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                              {payment.facultyId?.designation || "-"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="font-semibold text-gray-900">
+                              {payment.academicYear}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {payment.semesterType}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <FaCalendar size={14} />
+                              {new Date(payment.createdAt).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                }
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <span className="font-bold text-emerald-600 text-lg">
+                              ₹
+                              {parseFloat(
+                                payment.totalAmount || 0
+                              ).toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(payment.status)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="d-md-none mb-3" />
-
-          {/* Search Input */}
-          <Card className="mb-4 p-3 shadow rounded-4 border-0 bg-white">
-            <InputGroup>
-              <InputGroup.Text className="bg-white border-end-0">
-                <FaSearch />
-              </InputGroup.Text>
-              <Form.Control
-                type="text"
-                className="border-start-0"
-                placeholder="Search by faculty name or designation"
-                value={searchTerm} // ADDed this
-                onChange={(e) => setSearchTerm(e.target.value)} // ADDed this
-              />
-            </InputGroup>
-          </Card>
-
-          {/* Table */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-3">Faculty Payment History</h5>
-            <Table bordered hover responsive striped className="align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th>Faculty Name</th>
-                  <th>Designation</th>
-                  <th>Academic Year</th>
-                  <th>Semester Type</th>
-                  <th>Payment Date</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((item, index) => (
-                  <tr key={index}>
-                    <td>
-                      <button
-                        className="btn btn-link p-0 text-decoration-none fw-medium text-primary"
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          textAlign: "left",
-                        }}
-                        onClick={() =>
-                          navigate(
-                            `/admin/paymenthistory/details/${item.facultyId._id}/${item.academicYear}/${item.semesterType}`
-                          )
-                        }
-                      >
-                        {item.facultyName}
-                      </button>
-                    </td>
-                    <td className="text-primary">
-                      {item.facultyId?.designation || "-"}
-                    </td>
-                    <td className="text-primary">{item.academicYear}</td>
-                    <td className="text-primary">{item.semesterType}</td> 
-                    <td className="text-primary">
-                      {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="fw-bold text-success">
-                      ₹ {item.totalAmount}
-                    </td>
-                    <td>{getStatusBadge(item.status)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 }
 

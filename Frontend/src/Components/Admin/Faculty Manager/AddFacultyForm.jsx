@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Container, Form, Row, Col, Button, Alert, Card, Badge, InputGroup } from "react-bootstrap";
-import { FaArrowLeft, FaUserPlus, FaUserTie, FaBookOpen, FaEnvelope, FaPhone, FaCalendarAlt, FaLayerGroup } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaArrowLeft, FaUserPlus, FaUserTie, FaBookOpen, FaEnvelope, FaCalendarAlt, FaLayerGroup, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import api from "../../../utils/api";
 import Select from "react-select";
 import toast from "react-hot-toast";
+import AdminDesktopSidebar from "../AdminDesktopSidebar";
 
 function AddFacultyForm() {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ function AddFacultyForm() {
     email: "",
     password: "",
     phone: "",
-    /* baseSalary: "", */
     travelAllowance: "",
     academicYear: "",
     semesterType: "",
@@ -27,8 +26,8 @@ function AddFacultyForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [subjectOptions, setSubjectOptions] = useState([]);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const departments = [
     "Computer",
@@ -46,27 +45,26 @@ function AddFacultyForm() {
     "External Examiner",
   ];
 
-  // ✅ Get semester options dynamically based on type
+  const handleSidebarOpen = () => setShowSidebar(true);
+  const handleSidebarClose = () => setShowSidebar(false);
+
   const getSemesterOptions = () => {
     if (formData.semesterType === "Odd") return [1, 3, 5, 7];
     if (formData.semesterType === "Even") return [2, 4, 6, 8];
     return [];
   };
 
-  // ✅ Fetch subjects dynamically based on semester
   useEffect(() => {
     const fetchSubjects = async () => {
       if (formData.semester) {
         try {
-          const res = await api.get(
-            `/faculty/subject/getList?semester=${formData.semester}`
-          );
+          const res = await api.get(`/faculty/subject/getList?semester=${formData.semester}`);
           const subjectNames = res.data.map((subj) => subj.name);
           setSubjectOptions(subjectNames);
         } catch (err) {
           console.error("Failed to fetch subjects:", err);
           if (err.response?.status === 401) {
-            alert("Authentication failed. Please login again.");
+            toast.error("Authentication failed. Please login again.");
             navigate("/login");
           }
         }
@@ -119,7 +117,6 @@ function AddFacultyForm() {
     setError("");
 
     try {
-      // Group by academicYear and semesterType
       const academicAssignments = [];
 
       assignedSubjects.forEach((a) => {
@@ -152,16 +149,14 @@ function AddFacultyForm() {
         phone: formData.phone,
         department: formData.department,
         designation: formData.designation,
-        /* baseSalary: Number(formData.baseSalary), */
         travelAllowance: Number(formData.travelAllowance),
-        academicAssignments, // ✅ final nested structure
+        academicAssignments,
       };
 
       const response = await api.post("/admin/faculty/add", facultyData);
       console.log("Faculty created successfully:", response.data);
       setSuccess(true);
 
-      // reset
       setFormData({
         name: "",
         department: "",
@@ -169,7 +164,6 @@ function AddFacultyForm() {
         email: "",
         password: "",
         phone: "",
-        /* baseSalary: "", */
         travelAllowance: "",
         academicYear: "",
         semesterType: "",
@@ -181,10 +175,8 @@ function AddFacultyForm() {
     } catch (err) {
       console.error("Error creating faculty:", err);
       if (err.response?.status === 403) {
-        // alert("A faculty with this email already exists.");
         toast.error("A faculty with this email already exists.");
       } else if (err.response?.status === 401) {
-        // alert("Authentication failed. Please login again.");
         toast.error("Authentication failed. Please login again.");
         navigate("/login");
       } else {
@@ -203,378 +195,458 @@ function AddFacultyForm() {
   };
 
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Header */}
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Button
-          variant="outline-secondary"
-          className="d-flex align-items-center gap-2"
-          onClick={handleGoBack}
-        >
-          <FaArrowLeft /> Back
-        </Button>
-        <h2 className="fw-bold mb-0">Add Faculty Member</h2>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Desktop Sidebar */}
+        <AdminDesktopSidebar />
 
-      <Card
-        className="shadow rounded-4 border-0 p-4 bg-white mx-auto"
-        style={{ maxWidth: 900 }}
-      >
-        <Form onSubmit={handleSubmit}>
-          <Row>
-            {/* Faculty Details */}
-            <Col md={6}>
-              <div className="d-flex align-items-center gap-2 mb-3">
-                <FaUserTie className="text-primary" />
-                <h5 className="fw-bold mb-0">Faculty Details</h5>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Name</Form.Label>
-                <Form.Control
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Enter faculty name"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Department</Form.Label>
-                <Select
-                  options={departments.map((dep) => ({
-                    value: dep,
-                    label: dep,
-                  }))}
-                  value={
-                    formData.department
-                      ? {
-                          value: formData.department,
-                          label: formData.department,
-                        }
-                      : null
-                  }
-                  onChange={(selected) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      department: selected ? selected.value : "",
-                    }))
-                  }
-                  placeholder="Select Department"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Designation</Form.Label>
-                <Select
-                  options={designations.map((des) => ({
-                    value: des,
-                    label: des,
-                  }))}
-                  value={
-                    formData.designation
-                      ? {
-                          value: formData.designation,
-                          label: formData.designation,
-                        }
-                      : null
-                  }
-                  onChange={(selected) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      designation: selected ? selected.value : "",
-                    }))
-                  }
-                  placeholder="Select Designation"
-                  required
-                />
-              </Form.Group>
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8">
+              <button
+                onClick={handleGoBack}
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:shadow-md hover:border-gray-300 transition-all"
+              >
+                <FaArrowLeft size={16} />
+                Back
+              </button>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Add Faculty Member</h1>
+            </div>
 
-              {/* Remuneration */}
-              <div className="d-flex align-items-center gap-2 mb-3 mt-4">
-                <FaUserPlus className="text-success" />
-                <h5 className="fw-bold mb-0">Remuneration Details</h5>
-              </div>
-              {/* <Form.Group className="mb-3">
-                <Form.Label>Base Salary</Form.Label>
-                <Form.Control
-                  name="baseSalary"
-                  value={formData.baseSalary}
-                  onChange={handleChange}
-                  type="number"
-                  min="0"
-                  placeholder="Enter Base Salary"
-                  required
-                />
-              </Form.Group> */}
-              <Form.Group className="mb-3">
-                <Form.Label>Travel Allowance</Form.Label>
-                <InputGroup>
-                  <InputGroup.Text>₹</InputGroup.Text>
-                  <Form.Control
-                    name="travelAllowance"
-                    value={formData.travelAllowance}
-                    onChange={handleChange}
-                    type="number"
-                    min="0"
-                    placeholder="Enter Travel Allowance"
-                    required
-                  />
-                </InputGroup>
-              </Form.Group>
-            </Col>
-
-            {/* Contact + Assignments */}
-            <Col md={6}>
-              <div className="d-flex align-items-center gap-2 mb-3 mt-4 mt-md-0">
-                <FaEnvelope className="text-primary" />
-                <h5 className="fw-bold mb-0">Contact Details</h5>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Email</Form.Label>
-                <Form.Control
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter email"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Password</Form.Label>
-                <Form.Control
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter password"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Phone</Form.Label>
-                <InputGroup>
-                <InputGroup.Text>+91</InputGroup.Text>
-                <Form.Control
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.length <= 10) {
-                      setFormData({ ...formData, phone: value.replace(/\D/g, "") });
-                    }
-                  }}
-                  placeholder="Enter 10 digit contact number"
-                  maxLength="10"
-                  required
-                />
-                </InputGroup>
-              </Form.Group>
-
-
-              {/* ✅ Academic Year + Semester Type */}
-              <Card className="shadow-sm rounded-3 border-0 p-3 mt-4 bg-light">
-                <Row>
-                  <div className="d-flex align-items-center gap-2 mb-3 mt-4 mt-md-0">
-                    <FaBookOpen className="text-primary" />
-                    <h5 className="fw-bold mb-0">Subject Assignments</h5>
-                  </div>
-
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>
-                        <FaCalendarAlt className="me-1 text-secondary" />{" "}
-                        Academic Year
-                      </Form.Label>
-                      <Form.Select
-                        value={formData.academicYear}
-                        onChange={(e) => {
-                          const start = e.target.value;
-                          const end = (parseInt(start) + 1)
-                            .toString()
-                            .slice(-2);
-                          setFormData({
-                            ...formData,
-                            academicYear: `${start}-${end}`,
-                          });
-                        }}
-                      >
-                        <option value="">Select Year</option>
-                        {Array.from({ length: 6 }, (_, i) => 2023 + i).map(
-                          (year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          )
-                        )}
-                      </Form.Select>
-
-                      {/* ✅ Academic Year Preview Badge */}
-                      {formData.academicYear && (
-                        <div className="mt-2">
-                          <Badge bg="info">
-                            Academic Year: {formData.academicYear}
-                          </Badge>
+            {/* Main Form Card */}
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm p-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Faculty Details */}
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <FaUserTie className="text-blue-600" size={20} />
+                        <h3 className="text-xl font-semibold text-gray-900">Faculty Details</h3>
+                      </div>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                          <input
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter faculty name"
+                            required
+                          />
                         </div>
-                      )}
-                    </Form.Group>
-                  </Col>
 
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>
-                        <FaLayerGroup className="me-1 text-secondary" />{" "}
-                        Semester Type
-                      </Form.Label>
-                      <Form.Select
-                        value={formData.semesterType}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            semesterType: e.target.value,
-                            semester: "",
-                          })
-                        }
-                        required
-                      >
-                        <option value="">Select Type</option>
-                        <option value="Odd">Odd</option>
-                        <option value="Even">Even</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                          <Select
+                            options={departments.map((dep) => ({
+                              value: dep,
+                              label: dep,
+                            }))}
+                            value={
+                              formData.department
+                                ? {
+                                    value: formData.department,
+                                    label: formData.department,
+                                  }
+                                : null
+                            }
+                            onChange={(selected) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                department: selected ? selected.value : "",
+                              }))
+                            }
+                            placeholder="Select Department"
+                            className="basic-select"
+                            classNamePrefix="select"
+                            styles={{
+                              control: (provided) => ({
+                                ...provided,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: "12px",
+                                padding: "4px",
+                                minHeight: "48px",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#e5e7eb",
+                                },
+                              }),
+                              menu: (provided) => ({
+                                ...provided,
+                                borderRadius: "12px",
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                              }),
+                            }}
+                            required
+                          />
+                        </div>
 
-                {/* Subject Assignment */}
-                <Row>
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Semester</Form.Label>
-                      <Select
-                        options={getSemesterOptions().map((sem) => ({
-                          value: sem,
-                          label: `Semester ${sem}`,
-                        }))}
-                        value={
-                          formData.semester
-                            ? {
-                                value: formData.semester,
-                                label: `Semester ${formData.semester}`,
-                              }
-                            : null
-                        }
-                        onChange={(selected) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            semester: selected ? selected.value : "",
-                          }))
-                        }
-                        placeholder="Select Semester"
-                        isDisabled={!formData.semesterType}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Subjects</Form.Label>
-                      <Select
-                        options={subjectOptions.map((sub) => ({
-                          value: sub,
-                          label: sub,
-                        }))}
-                        value={
-                          formData.subject
-                            ? {
-                                value: formData.subject,
-                                label: formData.subject,
-                              }
-                            : null
-                        }
-                        onChange={(selected) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            subject: selected ? selected.value : "",
-                          }))
-                        }
-                        placeholder="Select Subject"
-                        isDisabled={!formData.semester}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Button
-                  variant="outline-primary"
-                  className="fw-bold px-3 py-1 rounded-pill"
-                  onClick={handleAddAssignment}
-                  disabled={!(formData.semester && formData.subject)}
-                >
-                  Add Assignment
-                </Button>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                          <Select
+                            options={designations.map((des) => ({
+                              value: des,
+                              label: des,
+                            }))}
+                            value={
+                              formData.designation
+                                ? {
+                                    value: formData.designation,
+                                    label: formData.designation,
+                                  }
+                                : null
+                            }
+                            onChange={(selected) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                designation: selected ? selected.value : "",
+                              }))
+                            }
+                            placeholder="Select Designation"
+                            className="basic-select"
+                            classNamePrefix="select"
+                            styles={{
+                              control: (provided) => ({
+                                ...provided,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: "12px",
+                                padding: "4px",
+                                minHeight: "48px",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#e5e7eb",
+                                },
+                              }),
+                              menu: (provided) => ({
+                                ...provided,
+                                borderRadius: "12px",
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                              }),
+                            }}
+                            required
+                          />
+                        </div>
 
-                {assignedSubjects.length > 0 && (
-                  <div className="mt-3">
-                    <h6 className="fw-bold">Assigned Subjects:</h6>
-                    <ul className="list-group">
-                      {assignedSubjects.map((a, idx) => (
-                        <li
-                          key={idx}
-                          className="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <span>
-                            Semester {a.semester} - {a.subject}
-                          </span>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleRemoveAssignment(idx)}
+                        {/* Remuneration */}
+                        <div>
+                          <div className="flex items-center gap-3 mb-4">
+                            <FaUserPlus className="text-emerald-600" size={18} />
+                            <h4 className="text-lg font-semibold text-gray-900">Remuneration Details</h4>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Travel Allowance</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span className="text-gray-500 text-sm">₹</span>
+                              </div>
+                              <input
+                                name="travelAllowance"
+                                value={formData.travelAllowance}
+                                onChange={handleChange}
+                                type="number"
+                                min="0"
+                                className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                placeholder="Enter Travel Allowance"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact + Assignments */}
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <FaEnvelope className="text-blue-600" size={20} />
+                        <h3 className="text-xl font-semibold text-gray-900">Contact Details</h3>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                          <input
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter email"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                          <input
+                            name="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter password"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 text-sm font-medium">+91</span>
+                            </div>
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value.length <= 10) {
+                                  setFormData({ ...formData, phone: value.replace(/\D/g, "") });
+                                }
+                              }}
+                              className="w-full pl-20 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter 10 digit contact number"
+                              maxLength="10"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Subject Assignments Card */}
+                        <div className="bg-gray-50/80 backdrop-blur border border-gray-200 rounded-2xl p-6">
+                          <div className="flex items-center gap-3 mb-6">
+                            <FaBookOpen className="text-blue-600" size={20} />
+                            <h4 className="text-lg font-semibold text-gray-900">Subject Assignments</h4>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <FaCalendarAlt className="text-gray-500" size={14} />
+                                Academic Year
+                              </label>
+                              <select
+                                value={formData.academicYear?.slice(0, 4) || ""}
+                                onChange={(e) => {
+                                  const start = e.target.value;
+                                  const end = (parseInt(start) + 1).toString().slice(-2);
+                                  setFormData({
+                                    ...formData,
+                                    academicYear: `${start}-${end}`,
+                                  });
+                                }}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">Select Year</option>
+                                {Array.from({ length: 6 }, (_, i) => 2023 + i).map((year) => (
+                                  <option key={year} value={year}>
+                                    {year}
+                                  </option>
+                                ))}
+                              </select>
+                              {formData.academicYear && (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                                  Academic Year: {formData.academicYear}
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <FaLayerGroup className="text-gray-500" size={14} />
+                                Semester Type
+                              </label>
+                              <select
+                                value={formData.semesterType}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    semesterType: e.target.value,
+                                    semester: "",
+                                  })
+                                }
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
+                              >
+                                <option value="">Select Type</option>
+                                <option value="Odd">Odd</option>
+                                <option value="Even">Even</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+                              <Select
+                                options={getSemesterOptions().map((sem) => ({
+                                  value: sem,
+                                  label: `Semester ${sem}`,
+                                }))}
+                                value={
+                                  formData.semester
+                                    ? {
+                                        value: formData.semester,
+                                        label: `Semester ${formData.semester}`,
+                                      }
+                                    : null
+                                }
+                                onChange={(selected) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    semester: selected ? selected.value : "",
+                                  }))
+                                }
+                                placeholder="Select Semester"
+                                isDisabled={!formData.semesterType}
+                                className="basic-select"
+                                classNamePrefix="select"
+                                styles={{
+                                  control: (provided) => ({
+                                    ...provided,
+                                    border: "1px solid #e5e7eb",
+                                    borderRadius: "12px",
+                                    padding: "4px",
+                                    minHeight: "48px",
+                                    boxShadow: "none",
+                                    "&:hover": {
+                                      borderColor: "#e5e7eb",
+                                    },
+                                  }),
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Subjects</label>
+                              <Select
+                                options={subjectOptions.map((sub) => ({
+                                  value: sub,
+                                  label: sub,
+                                }))}
+                                value={
+                                  formData.subject
+                                    ? {
+                                        value: formData.subject,
+                                        label: formData.subject,
+                                      }
+                                    : null
+                                }
+                                onChange={(selected) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    subject: selected ? selected.value : "",
+                                  }))
+                                }
+                                placeholder="Select Subject"
+                                isDisabled={!formData.semester}
+                                className="basic-select"
+                                classNamePrefix="select"
+                                styles={{
+                                  control: (provided) => ({
+                                    ...provided,
+                                    border: "1px solid #e5e7eb",
+                                    borderRadius: "12px",
+                                    padding: "4px",
+                                    minHeight: "48px",
+                                    boxShadow: "none",
+                                    "&:hover": {
+                                      borderColor: "#e5e7eb",
+                                    },
+                                  }),
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={handleAddAssignment}
+                            disabled={!(formData.semester && formData.subject)}
+                            className="flex items-center gap-2 px-6 py-2.5 border border-blue-300 rounded-full text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Remove
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
+                            Add Assignment
+                          </button>
+
+                          {assignedSubjects.length > 0 && (
+                            <div className="mt-6">
+                              <h6 className="text-sm font-semibold text-gray-900 mb-3">Assigned Subjects:</h6>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {assignedSubjects.map((a, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                                  >
+                                    <span className="text-sm font-medium text-gray-900">
+                                      Semester {a.semester} - {a.subject}
+                                    </span>
+                                    <button
+                                      onClick={() => handleRemoveAssignment(idx)}
+                                      className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                                    >
+                                      <FaTrash size={12} />
+                                      Remove
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </Card>
-            </Col>
-          </Row>
 
-          {/* Submit */}
-          <div className="text-end mt-3">
-            <Button
-              type="submit"
-              variant="primary"
-              className="fw-bold px-4 py-2 d-flex align-items-center gap-2 rounded-pill"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div
-                    className="spinner-border spinner-border-sm"
-                    role="status"
-                  ></div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <FaUserPlus /> Add Faculty
-                </>
-              )}
-            </Button>
+                  {/* Submit Button */}
+                  <div className="flex justify-end pt-4 border-t border-gray-200">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <FaUserPlus size={18} />
+                          Add Faculty
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Alerts */}
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-2xl px-6 py-4 flex items-start gap-3 shadow-sm">
+                      <svg className="w-5 h-5 mt-0.5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">{error}</span>
+                    </div>
+                  )}
+                  {success && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-2xl px-6 py-4 flex items-start gap-3 shadow-sm">
+                      <svg className="w-5 h-5 mt-0.5 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">Faculty member added successfully!</span>
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
           </div>
-
-          {error && (
-            <Alert variant="danger" className="mt-4 rounded-3 shadow-sm">
-              <strong>Error:</strong> {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert variant="success" className="mt-4 rounded-3 shadow-sm">
-              Faculty member added successfully!
-            </Alert>
-          )}
-        </Form>
-      </Card>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 }
 

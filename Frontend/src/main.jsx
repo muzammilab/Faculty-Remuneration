@@ -4,12 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 
 import { Provider } from "react-redux";
-import remunerationStore from "./store/index.js";
-
+import store from "./redux/store.js";
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <StrictMode>
-      <Provider store={remunerationStore}>
+      <Provider store={store}>
         <App />
       </Provider>
     </StrictMode>

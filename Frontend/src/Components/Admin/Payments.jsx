@@ -1,13 +1,27 @@
 import { useState, useEffect } from "react";
-import { FaSave, FaSyncAlt, FaUser, FaDollarSign, FaBook, FaCheckCircle } from "react-icons/fa";
+import {
+  FaSave,
+  FaSyncAlt,
+  FaUser,
+  FaDollarSign,
+  FaBook,
+  FaCheckCircle,
+} from "react-icons/fa";
 import AdminSidebar from "./AdminSidebar";
 import AdminNavbar from "./AdminNavbar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import api from "../../utils/api";
 import axios from "axios";
 import AdminDesktopSidebar from "./AdminDesktopSidebar";
+import { fetchSubjectDetails } from "../../redux/slices/subjectSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { createPayment } from "../../redux/slices/paymentSlice";
+import toast from "react-hot-toast";
 
 function Payments() {
+  const dispatch = useDispatch();
+  const { selectedSubjectDetails } = useSelector((state) => state.subjects);
+
   const [showSidebar, setShowSidebar] = useState(false);
   const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState("");
@@ -19,7 +33,6 @@ function Payments() {
 
   // State variables for remuneration form
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedSubjectDetails, setSelectedSubjectDetails] = useState(null);
   const [termWorkPapers, setTermWorkPapers] = useState("");
   const [termWorkRate, setTermWorkRate] = useState("");
   const [oralPapers, setOralPapers] = useState("");
@@ -121,7 +134,7 @@ function Payments() {
   // Handle subject selection and fetch details
   const handleSubjectChange = async (subjectName) => {
     setSelectedSubject(subjectName);
-    setSelectedSubjectDetails(null);
+    // setSelectedSubjectDetails(null);
 
     // Reset form fields
     setTermWorkPapers("");
@@ -132,29 +145,18 @@ function Payments() {
     setSemesterRate("");
 
     if (subjectName) {
-      try {
-        setLoading(true);
-        // Find the selected subject object to get its ID
-        const selectedSubjectObj = subjects.find(
-          (subject) => subject.name === subjectName
-        );
-        if (!selectedSubjectObj) {
-          alert("Selected subject not found");
-          return;
-        }
-
-        // Fetch subject details from MongoDB
-        const response = await axios.get(
-          `http://localhost:3002/faculty/subject/getList/${selectedSubjectObj.subjectId}`
-        );
-        console.log("Subject details:", response.data);
-        setSelectedSubjectDetails(response.data);
-      } catch (error) {
-        console.error("Error fetching subject details:", error);
-        alert("Failed to fetch subject details");
-      } finally {
-        setLoading(false);
+      // setLoading(true);
+      // Find the selected subject object to get its ID
+      const selectedSubjectObj = subjects.find(
+        (subject) => subject.name === subjectName
+      );
+      if (!selectedSubjectObj) {
+        alert("Selected subject not found");
+        return;
       }
+
+      // Fetch subject details from MongoDB
+      dispatch(fetchSubjectDetails(selectedSubjectObj.subjectId));
     }
   };
 
@@ -370,16 +372,10 @@ function Payments() {
         semesterType: semesterObj.semesterType, // ✅ send Odd/Even
         subjectBreakdown: uniqueSubjectBreakdown,
       };
+      const result = await dispatch(createPayment(paymentData));
 
-      console.log("Sending final payment data:", paymentData);
-      const response = await axios.post(
-        "http://localhost:3002/admin/payment/create",
-        paymentData
-      );
-      console.log("Final calculation response:", response.data);
-
-      if (response.data) {
-        alert("Payment calculation saved successfully!");
+      if (createPayment.fulfilled.match(result)) {
+        toast.success("Payment calculation saved successfully!");
         // Clear the calculated remunerations after successful save
         setCalculatedRemunerations([]);
         // Reset form
@@ -390,21 +386,23 @@ function Payments() {
         setOralRate("");
         setSemesterPapers("");
         setSemesterRate("");
+        // dispatch(fetchPayments());
+      } else {
+        toast.error(result.payload || "Failed to save Payment");
       }
-    } catch (error) {
-      console.error("Error saving final calculation:", error);
-      alert("Failed to save final calculation. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
+        <AdminMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
+        />
 
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />

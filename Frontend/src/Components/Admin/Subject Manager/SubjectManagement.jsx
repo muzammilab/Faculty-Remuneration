@@ -1,17 +1,30 @@
 import { useState, useEffect } from "react";
-import { FaSearch, FaPlus, FaTimes, FaBook, FaGraduationCap, FaCheckCircle, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaSearch,
+  FaPlus,
+  FaTimes,
+  FaBook,
+  FaGraduationCap,
+  FaCheckCircle,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../AdminNavbar";
 import AdminMobileSidebar from "../AdminMobileSidebar";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
-import api from "../../../utils/api";
+import {
+  createSubject,
+  deleteSubject,
+  fetchSubjects,
+  updateSubject,
+} from "../../../redux/slices/subjectSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 function SubjectsManagement() {
+  const dispatch = useDispatch();
+
   const navigate = useNavigate();
   const [showSidebar, setShowSidebar] = useState(false);
-  const [subjects, setSubjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter states
@@ -30,28 +43,18 @@ function SubjectsManagement() {
     hasSemesterExam: false,
   });
 
+  const {
+    list: subjects,
+    loading,
+    error,
+  } = useSelector((state) => state.subjects);
+
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
 
   useEffect(() => {
-    fetchSubjects();
-  }, []);
-
-  const fetchSubjects = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get(
-        "http://localhost:3002/faculty/subject/getList"
-      );
-      setSubjects(res.data);
-      setError("");
-    } catch (err) {
-      console.error("Failed to fetch subjects:", err);
-      setError("Failed to load subjects. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchSubjects());
+  }, [dispatch]);
 
   // Get unique branches
   const branches = [
@@ -113,40 +116,23 @@ function SubjectsManagement() {
   };
 
   const handleSave = async () => {
-    try {
-      if (editingSubject) {
-        await api.put(
-          `http://localhost:3002/faculty/subject/update/${editingSubject}`,
-          subjectData
-        );
-        alert("Subject updated successfully");
-      } else {
-        await api.post(
-          "http://localhost:3002/faculty/subject/create",
-          subjectData
-        );
-        alert("Subject created successfully");
-      }
-      handleCloseModal();
-      fetchSubjects();
-    } catch (err) {
-      console.error("Failed to save subject:", err);
-      alert("Failed to save subject. Please try again.");
+    if (editingSubject) {
+      await dispatch(updateSubject({ id: editingSubject, subjectData }));
+      alert("Subject updated successfully");
+    } else {
+      await dispatch(createSubject(subjectData));
+      alert("Subject created successfully");
     }
+    handleCloseModal();
+    // dispatch(fetchSubjects()); // Refresh the subject list
   };
 
+  // Updated handleDelete function using Redux Toolkit
   const handleDelete = async (subjectId, subjectName) => {
     if (window.confirm(`Are you sure you want to delete ${subjectName}?`)) {
-      try {
-        await api.delete(
-          `http://localhost:3002/faculty/subject/delete/${subjectId}`
-        );
-        alert("Subject deleted successfully");
-        fetchSubjects();
-      } catch (err) {
-        console.error("Failed to delete subject:", err);
-        alert("Failed to delete subject. Please try again.");
-      }
+      await dispatch(deleteSubject(subjectId));
+      alert("Subject deleted successfully");
+      // dispatch(fetchSubjects()); // Refresh the subject list
     }
   };
 
@@ -154,7 +140,10 @@ function SubjectsManagement() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
+        <AdminMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
+        />
 
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />

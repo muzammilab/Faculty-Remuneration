@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import { FaBars, FaEdit, FaArrowLeft, FaUser, FaPhone, FaBuilding, FaEnvelope, FaBook, FaDollarSign } from "react-icons/fa";
+import {
+  FaBars,
+  FaEdit,
+  FaArrowLeft,
+  FaUser,
+  FaPhone,
+  FaBuilding,
+  FaEnvelope,
+  FaBook,
+  FaDollarSign,
+} from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 import axios from "axios";
@@ -60,7 +70,6 @@ function FacultyDetails() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
-
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
 

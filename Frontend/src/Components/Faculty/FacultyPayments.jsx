@@ -1,70 +1,40 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaDownload, FaChevronDown, FaChevronRight } from "react-icons/fa";
+import {
+  FaMoneyBillWave,
+  FaHistory,
+  FaFileInvoiceDollar,
+  FaDownload,
+  FaChevronDown,
+  FaChevronRight,
+} from "react-icons/fa";
 import AdminNavbar from "../Admin/AdminNavbar";
 import FacultyMobileSidebar from "./FacultyMobileSidebar";
 import FacultyDesktopSidebar from "./FacultyDesktopSidebar";
-import axios from "axios";
+import { fetchFacultyPayments } from "../../redux/slices/paymentSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 function FacultyPayments() {
+  const dispatch = useDispatch();
+
+  const isLoading = loading.facultyPayments;
+  const paymentData = facultyPayments;
+
   const [showSidebar, setShowSidebar] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [expandedItems, setExpandedItems] = useState({});
-  const [paymentData, setPaymentData] = useState({});
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const { facultyPayments, loading } = useSelector((state) => state.payments);
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
 
   useEffect(() => {
     const facultyId = localStorage.getItem("facultyId");
-    const fetchPayments = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}`
-        );
-
-        const payments = res.data.payments;
-        console.log("Getting Payment Details for Faculty Payments Page ");
-        console.log(res.data);
-        const grouped = {};
-
-        payments.forEach((p) => {
-          const year = p.academicYear;
-          const semType =
-            p.semesterType === "Odd" ? "Odd Semester" : "Even Semester";
-
-          if (!grouped[year]) grouped[year] = {};
-          if (!grouped[year][semType]) grouped[year][semType] = {};
-
-          p.subjectBreakdown.forEach((sb) => {
-            const semName = `Semester ${sb.semester}`;
-            if (!grouped[year][semType][semName])
-              grouped[year][semType][semName] = {};
-
-            grouped[year][semType][semName][sb.subjectName] = {
-              paymentId: p._id,
-              subjectId: sb.subjectId?._id?.toString?.() || sb.subjectId,
-              termWork: sb.termTestAssessment?.amount || 0,
-              oralPractical: sb.oralPracticalAssessment?.amount || 0,
-              semesterPapers: sb.paperChecking?.amount || 0,
-              amount: `₹${sb.subjectTotal.toLocaleString()}`,
-              status: p.status === "unpaid" ? "Pending" : "Completed",
-              dueDate: new Date(p.createdAt).toLocaleDateString("en-GB"),
-            };
-          });
-        });
-        setPaymentData(grouped);
-      } catch (err) {
-        console.error("Error fetching payments:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPayments();
-  }, []);
+    if (facultyId) {
+      dispatch(fetchFacultyPayments(facultyId));
+    }
+  }, [dispatch]);
 
   const toggleExpanded = (path) => {
     setExpandedItems((prev) => ({
@@ -362,9 +332,9 @@ function FacultyPayments() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <FacultyMobileSidebar 
-          handleSidebarClose = {handleSidebarClose} 
-          showSidebar = {showSidebar} 
+        <FacultyMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
         />
 
         {/* Desktop Sidebar */}
@@ -388,7 +358,7 @@ function FacultyPayments() {
                     <p className="text-blue-100 text-sm font-medium mb-1">
                       Total Earned
                     </p>
-                    {loading ? (
+                    {isLoading ? (
                       <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
                     ) : (
                       <p className="text-3xl font-bold">₹82,500</p>
@@ -406,7 +376,7 @@ function FacultyPayments() {
                     <p className="text-emerald-100 text-sm font-medium mb-1">
                       Completed
                     </p>
-                    {loading ? (
+                    {isLoading ? (
                       <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
                     ) : (
                       <p className="text-3xl font-bold">₹42,250</p>
@@ -424,7 +394,7 @@ function FacultyPayments() {
                     <p className="text-gray-100 text-sm font-medium mb-1">
                       Pending
                     </p>
-                    {loading ? (
+                    {isLoading ? (
                       <div className="h-9 w-32 bg-white/20 rounded animate-pulse"></div>
                     ) : (
                       <p className="text-3xl font-bold">₹37,750</p>
@@ -487,7 +457,7 @@ function FacultyPayments() {
 
               {/* Hierarchical Payment Data */}
               <div className="p-6">
-                {loading ? (
+                {isLoading ? (
                   <div className="space-y-4">
                     {[...Array(3)].map((_, idx) => (
                       <div

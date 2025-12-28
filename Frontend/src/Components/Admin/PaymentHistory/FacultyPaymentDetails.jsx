@@ -15,14 +15,14 @@ import { useDispatch, useSelector } from "react-redux";
 
 function FacultyPaymentDetails() {
   const dispatch = useDispatch();
-  const isLoading = loading.paymentDetailList;
-  const remuneration = facultyPaymentDetails;
 
   const navigate = useNavigate();
   const { id, academicYear, semesterType } = useParams();
   const { facultyPaymentDetails, loading } = useSelector(
     (state) => state.payments
   );
+  const isLoading = loading.paymentDetailList;
+  const remuneration = facultyPaymentDetails;
 
   const handleGoBack = () => navigate("/admin/paymenthistory");
 

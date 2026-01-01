@@ -17,6 +17,7 @@ exports.addFaculty = async (req, res) => {
                 const subjectDoc = await Subject.findOne({
                   name: subj.name,
                   semester: subj.semester,
+                  department: subj.department,
                 });
 
                 if (!subjectDoc) {
@@ -28,6 +29,7 @@ exports.addFaculty = async (req, res) => {
                 return {
                   subjectId: subjectDoc._id,
                   name: subj.name,
+                  department: subj.department,
                   semester: subj.semester,
                 };
               })
@@ -65,7 +67,7 @@ exports.addFaculty = async (req, res) => {
       /* baseSalary: req.body.baseSalary, */
       travelAllowance: req.body.travelAllowance,
       designation: req.body.designation,
-      assignedSubjects, // ✅ now matches schema
+      assignedSubjects, // now matches schema
     });
 
     await faculty.save();
@@ -77,55 +79,6 @@ exports.addFaculty = async (req, res) => {
   }
 };
 
-/* exports.addFaculty = async (req, res) => {
-  try {
-    const subjectsInput = req.body.academicAssignments;
-
-    const mappedSubjects = await Promise.all(
-      subjectsInput.map(async (subj) => {
-        const subjectDoc = await Subject.findOne({
-          name: subj.name,
-          semester: subj.semester,
-        });
-        return {
-          subjectId: subjectDoc._id,
-          name: subj.name,
-          semester: subj.semester,
-        };
-      })
-    );
-
-    const hashedPassword = await bcrypt.hash(req.body.password, 12);
-    const faculty = new Faculty({
-      name: req.body.name,
-      email: req.body.email,
-      password: hashedPassword,
-      phone: req.body.phone,
-      department: req.body.department,
-      role: req.body.role || "faculty",
-      baseSalary: req.body.baseSalary,
-      travelAllowance: req.body.travelAllowance,
-      designation: req.body.designation,
-      assignedSubjects: [
-        {
-          academicYear,
-          semesters: [
-            {
-              semesterType,
-              subjects: mappedSubjects,
-            },
-          ],
-        },
-      ],
-    });
-    await faculty.save();
-    res.status(201).json(faculty);
-  } catch (err) {
-    res
-      .status(400)
-      .json({ error: "Faculty creation failed", details: err.message });
-  }
-}; */
 
 // PUT /admin/faculty/:id/update
 exports.updateAssignments = async (req, res) => {
@@ -136,30 +89,34 @@ exports.updateAssignments = async (req, res) => {
     const faculty = await Faculty.findById(id);
     if (!faculty) return res.status(404).json({ error: "Faculty not found" });
 
-    // ✅ Resolve subjectId from DB using name + semester
+    // Resolve subjectId from DB using name + semester 
     const resolvedSubjects = await Promise.all(
       subjects.map(async (subj) => {
-        console.log("🔍 Searching subject:", subj, "Semester:", subj.semester);
+        console.log("Searching for subject: ", subj);
         const found = await Subject.findOne({
           name: subj.name,
           semester: subj.semester,
+          department: subj.branch,
         });
 
         if (!found) {
           return res.status(400).json({
-            error: `Subject not found: ${subj.name} (Semester ${subj.semester})`,
+            error: `Subject not found: ${subj.name} -- Branch ${subj.branch} (Semester ${subj.semester})`,
           });
         }
+
+        console.log(found);
 
         return {
           subjectId: found._id,
           name: found.name,
           semester: found.semester,
+          department: found.department,
         };
       })
     );
 
-    // ✅ Now update assignments with resolved subjectIds
+    // Now update assignments with resolved subjectIds
     let yearBlock = faculty.assignedSubjects.find(
       (a) => a.academicYear === academicYear
     );
@@ -169,7 +126,7 @@ exports.updateAssignments = async (req, res) => {
         (s) => s.semesterType === semesterType
       );
       if (semBlock) {
-        semBlock.subjects.push(...resolvedSubjects); // same year+sem → add subjects
+        semBlock.subjects.push(...resolvedSubjects); // same year + semType → add subjects
       } else {
         yearBlock.semesters.push({ semesterType, subjects: resolvedSubjects }); // same year, new sem
       }
@@ -177,44 +134,17 @@ exports.updateAssignments = async (req, res) => {
       faculty.assignedSubjects.push({
         academicYear,
         semesters: [{ semesterType, subjects: resolvedSubjects }],
-      }); // new year
+      }); // new year 
     }
 
     await faculty.save();
     res.status(200).json({ message: "Assignments updated", faculty });
   } catch (err) {
     console.error("Error updating assignments:", err.message);
-    res.status(500).json({ error: "Server error", details: err.message });
+    res.status(500).json({ error: err.message, details: err.message });
   }
 };
 
-/* exports.updateAssignments = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { academicYear, semesterType, subjects } = req.body;
-
-    const faculty = await Faculty.findById(id);
-    if (!faculty) return res.status(404).json({ error: "Faculty not found" });
-
-    let yearBlock = faculty.assignedSubjects.find(a => a.academicYear === academicYear);
-
-    if (yearBlock) {
-      let semBlock = yearBlock.semesters.find(s => s.semesterType === semesterType);
-      if (semBlock) {
-        semBlock.subjects.push(...subjects); // same year+sem → add subjects
-      } else {
-        yearBlock.semesters.push({ semesterType, subjects }); // same year, new sem
-      }
-    } else {
-      faculty.assignedSubjects.push({ academicYear, semesters: [{ semesterType, subjects }] }); // new year
-    }
-
-    await faculty.save();
-    res.status(200).json({ message: "Assignments updated", faculty });
-  } catch (err) {
-    res.status(500).json({ error: "Server error", details: err.message });
-  }
-}; */
 
 // PUT /admin/faculty/:id/remove-subject
 exports.removeSubject = async (req, res) => {
@@ -250,12 +180,12 @@ exports.removeSubject = async (req, res) => {
       (sub) => String(sub.subjectId) !== String(subjectId)
     );
 
-    // clean up empty semesters
+    // clean up empty semesters 
     if (semBlock.subjects.length === 0) {
       yearBlock.semesters = yearBlock.semesters.filter((s) => s !== semBlock);
     }
 
-    // clean up empty year blocks
+    // clean up empty year blocks 
     if (yearBlock.semesters.length === 0) {
       faculty.assignedSubjects = faculty.assignedSubjects.filter(
         (a) => a !== yearBlock
@@ -277,9 +207,10 @@ exports.getAllFaculties = async (req, res) => {
       await Faculty.find(); /* .populate("assignedSubjects.subjectId"); */
     res.json(faculties);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get faculties" });
+    res.status(500).json({ error: "Failed to get faculties (Backend Error)" });
   }
 };
+
 
 exports.getSingleFaculty = async (req, res) => {
   try {
@@ -293,6 +224,7 @@ exports.getSingleFaculty = async (req, res) => {
   }
 };
 
+
 exports.editFaculty = async (req, res) => {
   try {
     const updateData = { ...req.body };
@@ -302,24 +234,6 @@ exports.editFaculty = async (req, res) => {
       updateData.password = await bcrypt.hash(updateData.password, 12);
     }
 
-    // Handle subjects if provided
-    /* if (updateData.subjects) {
-      const assignedSubjects = await Promise.all(
-        updateData.subjects.map(async (subj) => {
-          const subjectDoc = await Subject.findOne({
-            name: subj.name,
-            semester: subj.semester,
-          });
-          return {
-            subjectId: subjectDoc._id,
-            name: subj.name,
-            semester: subj.semester,
-          };
-        })
-      );
-      updateData.assignedSubjects = assignedSubjects;
-    }
- */
     const faculty = await Faculty.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
     });
@@ -334,6 +248,7 @@ exports.editFaculty = async (req, res) => {
     res.status(400).json({ error: "Update failed", details: err.message });
   }
 };
+
 
 exports.deleteFaculty = async (req, res) => {
   try {

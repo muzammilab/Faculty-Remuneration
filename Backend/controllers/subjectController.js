@@ -1,20 +1,11 @@
 
 const Subject = require("../models/subjects");
 
-/* exports.getSubjects = async (req, res) => {
-  try {
-    const semester = Number(req.query.semester);
-    const subjects = await Subject.find({ semester });
-    res.json(subjects);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch subjects' });
-  }
-};   */
-
+// Fetch all Subjects with optional filters
 exports.getSubjects = async (req, res) => {
   try {
 
-    // ✅ Filter by semester and/or department
+    // Filter by semester and/or department
     const filters = {};
 
     if (req.query.semester) {
@@ -33,7 +24,7 @@ exports.getSubjects = async (req, res) => {
   }
 };
 
-// ✅ Fetch Subject details by Subject ID
+// Fetch Subject details by Subject ID
 exports.getSubjectById = async (req, res) => {
   try {
     const subject = await Subject.findById(req.params.id);
@@ -81,6 +72,7 @@ exports.delete = async (req, res) => {
   }
 };
 
+// POST /api/admin/subjects/bulk
 exports.createBulk = async (req, res) => {
   try {
     const subjectsArray = req.body; // Expecting an array of subjects

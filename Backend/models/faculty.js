@@ -14,16 +14,16 @@ const facultySchema = new mongoose.Schema(
     designation: {
       type: String,
       enum: [
+        "HoD",
+        "Professor",
         "Assistant Professor",
         "Associate Professor",
-        "Professor",
         "External Examiner",
-        "HoD",
       ],
       required: true,
     },
 
-    // ✅ Grouped subject assignments per year + semesterType 
+    // Grouped subject assignments per year + semesterType 
     assignedSubjects: [
       {
         academicYear: { type: String, required: true }, // e.g. "2025-26"
@@ -34,6 +34,7 @@ const facultySchema = new mongoose.Schema(
               {
                 subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
                 name: String,
+                department: String, // NEW 
                 semester: Number
               }
             ]

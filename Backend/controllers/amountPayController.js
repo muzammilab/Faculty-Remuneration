@@ -9,7 +9,7 @@ exports.amountPay = async (req, res) => {
     // Mock Payment (you can later integrate Razorpay/Stripe)
     payment.status = "paid";
     payment.transactionId = "MOCKTXN-" + Date.now();
-    payment.paymentDate = new Date();
+    payment.paidAt = new Date();
 
     await payment.save();
 

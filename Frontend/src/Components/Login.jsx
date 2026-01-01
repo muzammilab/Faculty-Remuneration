@@ -27,7 +27,7 @@ function Login() {
       const response = await axios.post(url, payload);
 
       if (response.data.token) {
-        toast.success(`${loginRole.charAt(0).toUpperCase() + loginRole.slice(1)} Login Successful ✅`);
+        toast.success(`${loginRole.charAt(0).toUpperCase() + loginRole.slice(1)} Login Successful`);
         localStorage.setItem("token", response.data.token);
         if (loginRole === "faculty") {
           localStorage.setItem("role", "faculty");
@@ -45,49 +45,59 @@ function Login() {
   };
 
   return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center position-relative"
-      style={{
-        background: "linear-gradient(135deg, #0d6efd88, #0d6efd44), url('/college-banner.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+    <div className="min-h-screen flex items-center justify-center p-6 relative"
+         style={{
+           background: "linear-gradient(135deg, rgba(13, 110, 253, 0.5), rgba(13, 110, 253, 0.25)), url('/college-banner.jpg')",
+           backgroundSize: "cover",
+           backgroundPosition: "center",
+           backgroundAttachment: "fixed"
+         }}
     >
-      {/* Floating decorative circles */}
-      <div className="position-absolute top-0 start-0 w-100 h-100" style={{ overflow: "hidden", pointerEvents: "none" }}>
+      {/* Floating decorative circles - EXACT same as original */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="position-absolute bg-primary rounded-circle"
-          style={{ width: 120, height: 120, top: 50, left: 30, opacity: 0.2 }}
+          className="bg-blue-500/20 rounded-full"
+          style={{ width: 120, height: 120, top: 50, left: 30 }}
           animate={{ y: [0, 20, 0] }}
           transition={{ repeat: Infinity, duration: 6 }}
         />
         <motion.div
-          className="position-absolute bg-success rounded-circle"
-          style={{ width: 80, height: 80, bottom: 100, right: 50, opacity: 0.15 }}
+          className="bg-emerald-500/15 rounded-full"
+          style={{ width: 80, height: 80, bottom: 100, right: 50 }}
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 5 }}
         />
       </div>
 
+      {/* Main Card */}
       <motion.div
-        className="bg-white rounded-4 shadow-lg p-5 position-relative"
-        style={{ maxWidth: "420px", width: "100%", zIndex: 1 }}
+        className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-8 w-full max-w-sm relative z-10"
+        style={{ maxWidth: "420px" }}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, type: "spring", stiffness: 80 }}
       >
-        <div className="text-center mb-4">
-          <img src="/rcoe-logo.jpg" alt="Logo" height="60" className="mb-3" />
-          <h3 className="fw-bold text-primary">Faculty Remuneration Portal</h3>
+        {/* Header with RCOE Logo */}
+        <div className="text-center mb-8">
+          <img 
+            src="/rcoe-logo.jpg" 
+            alt="RCOE Logo" 
+            className="w-16 h-16 mx-auto mb-4 rounded-xl shadow-lg object-cover border-2 border-gray-200"
+          />
+          <h3 className="text-2xl font-bold text-blue-600 mb-1 tracking-tight">
+            Faculty Remuneration Portal
+          </h3>
         </div>
 
         {/* Role Tabs */}
-        <div className="d-flex justify-content-center mb-4 position-relative">
+        <div className="flex justify-center mb-8">
           {["admin", "faculty"].map((role) => (
             <motion.button
               key={role}
-              className={`nav-link px-4 py-2 rounded-pill ${
-                loginRole === role ? "active fw-bold bg-primary text-white" : "text-secondary"
+              className={`px-6 py-3 rounded-3xl font-bold text-sm transition-all duration-300 mx-1 flex-1 sm:flex-none cursor-pointer ${
+                loginRole === role
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
+                  : "bg-gray-200/70 text-gray-700 hover:bg-gray-300 hover:shadow-md"
               }`}
               onClick={() => setLoginRole(role)}
               whileHover={{ scale: 1.05 }}
@@ -99,67 +109,77 @@ function Login() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {loginRole === "faculty" ? (
             <motion.input
               type="text"
               name="username"
-              className="form-control rounded-pill shadow-sm"
+              className="w-full px-4 py-4 bg-white border-2 border-gray-300/50 rounded-3xl shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300 text-base placeholder-gray-500 backdrop-blur-sm hover:border-gray-400"
               placeholder="Faculty Username"
               value={formData.username}
               onChange={handleInputChange}
-              whileFocus={{ scale: 1.02, borderColor: "#0d6efd" }}
               required
+              whileFocus={{ scale: 1.02 }}
             />
           ) : (
             <motion.input
               type="email"
               name="adminId"
-              className="form-control rounded-pill shadow-sm"
+              className="w-full px-4 py-4 bg-white border-2 border-gray-300/50 rounded-3xl shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300 text-base placeholder-gray-500 backdrop-blur-sm hover:border-gray-400"
               placeholder="Admin Email"
               value={formData.adminId}
               onChange={handleInputChange}
-              whileFocus={{ scale: 1.02, borderColor: "#0d6efd" }}
               required
+              whileFocus={{ scale: 1.02 }}
             />
           )}
 
           <motion.input
             type="password"
             name="password"
-            className="form-control rounded-pill shadow-sm"
+            autoComplete="current-password" // Added this so that browser does not recommend password.
+            className="w-full px-4 py-4 bg-white border-2 border-gray-300/50 rounded-3xl shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300 text-base placeholder-gray-500 backdrop-blur-sm hover:border-gray-400"
             placeholder="Password"
             value={formData.password}
             onChange={handleInputChange}
-            whileFocus={{ scale: 1.02, borderColor: "#0d6efd" }}
             required
+            whileFocus={{ scale: 1.02 }}
           />
 
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="form-check">
-              <input type="checkbox" className="form-check-input" id="rememberMe" />
-              <label className="form-check-label small" htmlFor="rememberMe">Remember Me</label>
+          {/* Checkbox & Forgot Password - EXACT layout */}
+          <div className="flex justify-between items-center pt-1">
+            <div className="flex items-center space-x-3">
+              <input 
+                type="checkbox" 
+                className="w-5 h-5 text-blue-600 bg-gray-100 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 shadow-sm" 
+                id="rememberMe" 
+              />
+              <label htmlFor="rememberMe" className="text-sm text-gray-700 font-medium cursor-pointer select-none">
+                Remember Me
+              </label>
             </div>
             <button
               type="button"
-              className="btn btn-link small text-decoration-none"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-all duration-200 hover:underline cursor-pointer"
               onClick={() => navigate(`/forgot-password?role=${loginRole}`)}
             >
               Forgot Password?
             </button>
           </div>
 
+          {/* Submit Button */}
           <motion.button
             type="submit"
-            className="btn btn-primary rounded-pill py-2 fw-bold shadow-sm mt-3"
-            whileHover={{ y: -3, boxShadow: "0 0.5rem 1rem rgba(0,0,0,0.15)" }}
-            whileTap={{ scale: 0.97 }}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-3xl shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 mt-1 focus:outline-none focus:ring-4 focus:ring-blue-500/50 cursor-pointer"
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             Login
           </motion.button>
         </form>
 
-        <p className="text-center text-muted mt-3 small">
+        {/* Footer - EXACT same */}
+        <p className="text-center text-gray-500 mt-6 text-xs tracking-wide">
           © {new Date().getFullYear()} Faculty Remuneration System
         </p>
       </motion.div>
@@ -168,209 +188,3 @@ function Login() {
 }
 
 export default Login;
-
-
-/* 
-import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-
-function Login() {
-  const [loginRole, setLoginRole] = useState("faculty");
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    adminId: "",
-  });
-
-  const navigate = useNavigate();
-
-  const handleInputChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload =
-      loginRole === "faculty"
-        ? {
-            email: formData.username,
-            password: formData.password,
-          }
-        : {
-            email: formData.adminId,
-            password: formData.password,
-          };
-
-    try {
-      if (loginRole === "admin") {
-        const response = await axios.post(
-          "http://localhost:3002/admin/login",
-          payload
-        );
-        if (response.data.token) {
-          toast.success("Admin Login Successful ✅");
-          localStorage.setItem("token", response.data.token);
-          setFormData({ username: "", password: "", adminId: "" });
-          navigate("/admin/payments");
-        } else {
-          toast.error("Unexpected response from server");
-        }
-      } else {
-        const response = await axios.post(
-          "http://localhost:3002/faculty/login",
-          payload
-        );
-
-        if (response.data.token) {
-          // alert("Faculty Login Successful ✅");
-          toast.success("Faculty Login Successful ✅");
-          console.log(response.data);
-          localStorage.setItem("token", response.data.token);
-          localStorage.setItem("role", "faculty");
-          localStorage.setItem("facultyId", response.data.id); // 👈 save id for dashboard
-          setFormData({ username: "", password: "", adminId: "" });
-          navigate("/faculty/dashboard"); // 👈 redirect to faculty dashboard
-        }
-      }
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Login failed. Check console."
-      );
-    }
-  };
-
-  return (
-    <div className="min-vh-100 bg-light d-flex flex-column">
-      {/* Header *
-      <header className="d-flex justify-content-between align-items-center border-bottom px-4 py-3 bg-white shadow-sm">
-        <div className="d-flex align-items-center gap-3">
-          <img
-            src="/rcoe-logo.jpg"
-            alt="Logo"
-            height="40"
-            style={{ objectFit: "contain" }}
-          />
-          <h5 className="mb-0 fw-bold text-dark">
-            Faculty Remuneration Portal
-          </h5>
-        </div>
-      </header>
-
-      {/* Main *
-      <main className="container my-5 d-flex flex-column align-items-center justify-content-center flex-grow-1">
-        {/* College Banner *
-        <div className="text-center mb-4 w-100" style={{ maxWidth: "700px" }}>
-          <img
-            src="/college-banner.jpg"
-            className="img-fluid rounded"
-            alt="College Banner"
-            style={{ maxHeight: "200px", width: "100%", objectFit: "cover" }}
-          />
-        </div>
-
-        {/* Title *
-        <h3 className="fw-bold text-center text-primary mb-4">
-          Rizvi College of Engineering
-        </h3>
-
-        {/* Role Tabs *
-        <ul className="nav nav-tabs mb-4">
-          {["admin", "faculty"].map((role) => (
-            <li className="nav-item" key={role}>
-              <button
-                className={`nav-link ${
-                  loginRole === role ? "active fw-bold" : "text-secondary"
-                }`}
-                onClick={() => setLoginRole(role)}
-              >
-                {role.charAt(0).toUpperCase() + role.slice(1)}
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        {/* Form *
-        <form
-          onSubmit={handleSubmit}
-          className="w-100 bg-white shadow-sm rounded p-4"
-          style={{ maxWidth: "400px" }}
-        >
-          {loginRole === "faculty" ? (
-            <div className="mb-3">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                name="username"
-                className="form-control"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Enter your faculty username"
-                required
-              />
-            </div>
-          ) : (
-            <div className="mb-3">
-              <label className="form-label">Admin Email</label>
-              <input
-                type="email"
-                name="adminId"
-                className="form-control"
-                value={formData.adminId}
-                onChange={handleInputChange}
-                placeholder="Enter admin email"
-                required
-              />
-            </div>
-          )}
-
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              className="form-control"
-              value={formData.password}
-              onChange={handleInputChange}
-              onFocus={(e) => {
-                e.target.readOnly = false;
-              }}
-              readOnly
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <span className="small text-muted">Remember Me</span>
-            <input type="checkbox" className="form-check-input" />
-          </div>
-
-          <div className="d-grid mb-3">
-            <button className="btn btn-primary rounded-pill py-2 fw-bold">
-              Login
-            </button>
-          </div>
-
-          <p className="text-center">
-            <button
-              className="btn btn-link text-decoration-none small"
-              onClick={() => navigate(`/forgot-password?role=${loginRole}`)}
-              type="button"
-            >
-              Forgot Password?
-            </button>
-          </p>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-export default Login;
- */

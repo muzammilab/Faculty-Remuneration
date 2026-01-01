@@ -1,5 +1,4 @@
 import "./App.css";
-import "bootstrap/dist/css/bootstrap.min.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./Components/Login";
@@ -117,6 +116,7 @@ function App() {
             {" "}
           </Route>
         </Route>
+
         {/* Forgot password */}
         <Route
           path="/reset-password/:token"
@@ -124,8 +124,10 @@ function App() {
         ></Route>
 
         <Route path="/forgot-password" element={<ForgotPassword />}></Route>
+
         {/* Unauthorized page */}
         <Route path="/unauthorized" element={<Unauthorized />} />
+        
       </Routes>
       <Toaster />
     </>

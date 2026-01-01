@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Table, Button, Nav, Card, Offcanvas, Badge } from "react-bootstrap";
 import { FaBars, FaPrint, FaDownload, FaFileInvoiceDollar, FaArrowLeft, FaMoneyBillWave } from "react-icons/fa";
-import FacultySidebar from '../FacultySidebar';
+import FacultySidebar from './FacultySidebar';
 
 const paymentDetails = {
   facultyName: "Prof. Mohd Ashfaque",

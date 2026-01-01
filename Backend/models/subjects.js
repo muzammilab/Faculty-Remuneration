@@ -7,6 +7,7 @@ const subjectSchema = new mongoose.Schema({
   department: { type: String, required: true },
 
   // Assessment flags
+  hasTermWork: { type: Boolean, default: true },
   hasPractical: { type: Boolean, default: false },
   hasTermTest: { type: Boolean, default: false },
   hasSemesterExam: { type: Boolean, default: true },

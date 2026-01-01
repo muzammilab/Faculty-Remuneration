@@ -1,21 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Form,
-  Row,
-  Col,
-  Button,
-  Alert,
-  Card,
-} from "react-bootstrap";
-import {
-  FaArrowLeft,
-  FaUserPlus,
-  FaUserTie,
-  FaBookOpen,
-  FaEnvelope,
-  FaPhone,
-} from "react-icons/fa";
+import { Container, Form, Row, Col, Button, Alert, Card } from "react-bootstrap";
+import { FaArrowLeft, FaUserPlus, FaUserTie, FaBookOpen, FaEnvelope, FaPhone } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
 import Select from "react-select";
@@ -48,11 +33,11 @@ function EditFaculty() {
 
   const departments = [
     "Computer",
-    "Mechanical",
-    "Electrical",
-    "Civil",
     "AIDS",
     "ECS",
+    "Mechanical",
+    "Electrical",
+    "Civil",    
   ];
   const designations = [
     "Professor",

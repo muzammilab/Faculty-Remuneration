@@ -1,55 +1,38 @@
 import { useState, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Table,
-  Button,
-  InputGroup,
-  Form,
-  Offcanvas,
-  Alert,
-} from "react-bootstrap";
-import { FaSearch, FaEdit, FaTrash, FaUserPlus, FaBars } from "react-icons/fa";
+import { FaSearch, FaUserPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../../AdminSidebar";
-import api from "../../../utils/api";
+import toast from "react-hot-toast";
+import AdminNavbar from "../AdminNavbar";
+import AdminMobileSidebar from "../AdminMobileSidebar";
+import AdminDesktopSidebar from "../AdminDesktopSidebar";
+
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFaculties, deleteFaculty } from "../../../store/facultySlice";
 
 function FacultyManagement() {
+
+  const dispatch = useDispatch();
+  const { facultyList, loading, error } = useSelector((state) => state.facultySlice);
+  const isLoading = loading.fetchFacultiesLoading;
+
   const navigate = useNavigate();
   const [showSidebar, setShowSidebar] = useState(false);
-  const [facultyList, setFacultyList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
 
-  // Fetch faculties from MongoDB
   useEffect(() => {
-    const fetchFaculties = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get("/admin/faculty/getAll");
-        console.log("Fetched faculties:", response.data);
-        setFacultyList(response.data);
-        setError("");
-      } catch (err) {
-        console.error("Failed to fetch faculties:", err);
-        setError("Failed to load faculty data. Please try again.");
-        if (err.response?.status === 401) {
-          alert("Authentication failed. Please login again.");
-          navigate("/");
+    dispatch(fetchFaculties())
+      .unwrap() // Used when API fails or succeeds, do I need to do something immediately in THIS component?” If NO 👉 don’t use .unwrap(), If YES 👉 use .unwrap()
+      .catch((err) => {
+        console.log(err);
+        if (err?.status === 401) {
+          toast.error("Authentication failed. Please login again.");
+          navigate("/login");
         }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFaculties();
-  }, [navigate]);
+      });
+  }, [dispatch, navigate]);
 
   const handleFacultyClick = (facultyId) => {
     navigate(`/admin/facultymanager/details/${facultyId}`);
@@ -65,20 +48,10 @@ function FacultyManagement() {
 
   const handleDeleteFaculty = async (facultyId, facultyName) => {
     if (window.confirm(`Are you sure you want to delete ${facultyName}?`)) {
-      try {
-        await api.delete(`/admin/faculty/delete/${facultyId}`);
-        // Refresh the faculty list
-        const response = await api.get("/admin/faculty/getAll");
-        setFacultyList(response.data);
-        alert("Faculty deleted successfully");
-      } catch (err) {
-        console.error("Failed to delete faculty:", err);
-        alert("Failed to delete faculty. Please try again.");
-      }
+      dispatch(deleteFaculty(facultyId));
     }
   };
 
-  // Filter faculties based on search term
   const filteredFaculties = facultyList.filter(
     (faculty) =>
       faculty.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,207 +60,154 @@ function FacultyManagement() {
       faculty.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Format assigned subjects for display
-  const formatAssignedSubjects = (assignedSubjects) => {
-    if (!assignedSubjects || assignedSubjects.length === 0) {
-      return "No subjects assigned";
-    }
-    return assignedSubjects
-      .map((subject) => `${subject.name} (Sem ${subject.semester})`)
-      .join(", ");
-  };
-
   return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Mobile Hamburger Header Button */}
-      <div className="d-flex d-md-none align-items-center mb-3">
-        <Button
-          variant="outline-primary"
-          className="me-2"
-          onClick={handleSidebarOpen}
-        >
-          <FaBars size={20} />
-        </Button>
-        <h5 className="mb-0 fw-bold">Faculty Management</h5>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Mobile Sidebar */}
+        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
 
-      <Row>
-        {/* Sidebar: Offcanvas for mobile */}
-        <Offcanvas
-          show={showSidebar}
-          onHide={handleSidebarClose}
-          className="d-md-none"
-          backdrop
-        >
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        {/* Sidebar: static for desktop */}
-        <Col md={3} className="d-none d-md-block">
-          <Card
-            className="shadow-sm border-0 rounded-4 p-3 sticky-top"
-            style={{ minHeight: "90vh" }}
-          >
-            {<AdminSidebar />}
-            <div className="text-muted small mt-4">Role: Payment Officer</div>
-          </Card>
-        </Col>
+        {/* Desktop Sidebar */}
+        <AdminDesktopSidebar />
 
         {/* Main Content */}
-        <Col md={9}>
-          <div className="d-none d-md-block">
-            <h2 className="fw-bold mb-1">Faculty Management</h2>
-            <p className="text-primary mb-4">
-              Manage faculty member information
-            </p>
-          </div>
+        <div className="flex-1 overflow-auto">
+          <AdminNavbar
+            handleSidebarOpen={handleSidebarOpen}
+            page="Faculty Management"
+            desc="Manage faculty member information"
+          />
 
-          {/* Error Alert */}
-          {error && (
-            <Alert variant="danger" className="mb-4">
-              {error}
-            </Alert>
-          )}
-
-          {/* Search Bar */}
-          <Card className="mb-4 p-3 shadow rounded-4 border-0 bg-white">
-            <InputGroup>
-              <InputGroup.Text className="bg-white border-end-0">
-                <FaSearch />
-              </InputGroup.Text>
-              <Form.Control
-                type="text"
-                className="border-start-0"
-                placeholder="Search by name, department, or role"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </InputGroup>
-          </Card>
-
-          {/* Add Faculty Button */}
-          <div className="d-flex justify-content-end mb-3">
-            <Button
-              variant="primary"
-              className="rounded-pill d-flex align-items-center gap-2"
-              onClick={handleAddFaculty}
-            >
-              <FaUserPlus /> Add Faculty
-            </Button>
-          </div>
-
-          {/* Table */}
-          <Card className="mb-4 p-4 shadow rounded-4 border-0 bg-white">
-            <h5 className="fw-bold mb-3">Faculty List</h5>
-
-            {loading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <p className="mt-2 text-muted">Loading faculty data...</p>
+          <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl px-4 py-3 flex items-start gap-3 shadow-sm">
+                <svg
+                  className="h-5 w-5 mt-0.5 text-red-400 flex-shrink-0"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="font-medium">{error}</p>
               </div>
-            ) : filteredFaculties.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-muted">No faculty members found.</p>
-              </div>
-            ) : (
-              <Table bordered hover responsive striped className="align-middle">
-                <thead className="table-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Role</th>
-                    <th>Email</th>
-                    <th>Mobile Number</th>
-                    {/* <th>Assigned Subjects</th> */}
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFaculties.map((faculty) => (
-                    <tr key={faculty._id}>
-                      <td>
-                        <button
-                          className="btn btn-link p-0 text-decoration-none fw-medium text-primary"
-                          onClick={() => handleFacultyClick(faculty._id)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            textAlign: "left",
-                          }}
-                        >
-                          {faculty.name}
-                        </button>
-                      </td>
-                      <td>
-                        <span className="badge bg-primary">
-                          {faculty.department}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="badge bg-info text-dark">
-                          {faculty.designation}
-                        </span>
-                      </td>
-                      <td>{faculty.email}</td>
-                      <td>{faculty.phone}</td>
-                      {/* <td>
-                        {faculty.assignedSubjects &&
-                        faculty.assignedSubjects.length > 0 ? (
-                          faculty.assignedSubjects.map((assigned, i) =>
-                            assigned.semesters.map((sem, j) =>
-                              sem.subjects.map((sub, k) => (
-                                <span
-                                  key={`${i}-${j}-${k}`}
-                                  className="badge bg-secondary me-1 mb-1"
-                                >
-                                  {sub.name} (Sem {sub.semester}) [
-                                  {sem.semesterType} - {assigned.academicYear}]
-                                </span>
-                              ))
-                            )
-                          )
-                        ) : (
-                          <span className="text-muted">
-                            No subjects assigned
-                          </span>
-                        )}
-                      </td> */}
-                      <td>
-                        <Button
-                          variant="link"
-                          className="p-0 me-2 text-decoration-none"
-                          onClick={() => handleEditFaculty(faculty._id)}
-                        >
-                          <FaEdit className="me-1" /> Edit
-                        </Button>
-                        <Button
-                          variant="link"
-                          className="p-0 text-danger text-decoration-none"
-                          onClick={() =>
-                            handleDeleteFaculty(faculty._id, faculty.name)
-                          }
-                        >
-                          <FaTrash className="me-1" /> Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
             )}
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+
+            {/* Search Bar */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+              <div className="p-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaSearch className="text-gray-400" size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
+                        placeholder="Search by faculty name, role, email or department"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Add Faculty Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleAddFaculty}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:shadow-lg transition-shadow text-sm font-semibold cursor-pointer"
+              >
+                <FaUserPlus size={16} />
+                Add Faculty
+              </button>
+            </div>
+
+            {/* Faculty Table */}
+            <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm overflow-auto">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight">Faculty List</h3>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  {filteredFaculties.length} {filteredFaculties.length === 1 ? "faculty" : "faculties"}
+                </span>
+              </div>
+
+              {isLoading ? (
+                <div className="px-6 py-20 text-center">
+                  <div className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-4 text-sm text-gray-500">Loading faculty data...</p>
+                </div>
+              ) : filteredFaculties.length === 0 ? (
+                <div className="px-6 py-20 text-center">
+                  <p className="text-sm text-gray-500">No faculty members found.</p>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50/70">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mobile Number</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white/60 divide-y divide-gray-100">
+                    {filteredFaculties.map((faculty) => (
+                      <tr key={faculty._id} className="hover:bg-blue-50/60 transition-colors cursor-default">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleFacultyClick(faculty._id)}
+                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                          >
+                            {faculty.name}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            {faculty.department}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {faculty.designation}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {faculty.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {faculty.phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleEditFaculty(faculty._id)}
+                            className="text-blue-600 hover:text-blue-800 mr-3 transition-colors cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFaculty(faculty._id, faculty.name)}
+                            className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

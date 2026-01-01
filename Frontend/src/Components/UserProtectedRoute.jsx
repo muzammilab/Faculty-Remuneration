@@ -50,33 +50,3 @@ const ProtectedRoute = ({ allowedRoles }) => {
 };
 
 export default ProtectedRoute;
-
-// import React, { useState } from "react";
-// import { Navigate, Outlet } from "react-router-dom";
-
-// const ProtectedRoute = () => {
-//   const [userRole, setUserRole] = useState();
-//    useEffect(() => {
-//     try {
-//       const token = JSON.parse(localStorage.getItem("token"));
-//       const header = {
-//         headers: {
-//           Authorization: `Bearer ${token}`, // ✅ Pass the token in Authorization header
-//         },
-//       };
-
-//       axios
-//         .get("http://localhost:3002/role", header)
-//         .then((response) => {
-//           console.log(response.data.userData);
-//           setUserRole(response.data.userData.role);
-//         });
-//     } catch (error) {
-//       console.error("Error checking session:", error);
-//     }
-//   }, []);
-
-//   return userRole=="admin" <Outlet />;
-// };
-
-// export default ProtectedRoute;

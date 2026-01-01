@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Container, Row, Col, Card, Table, Form, Offcanvas, Button } from "react-bootstrap";
-import {
-  FaBars,
-} from "react-icons/fa";
-import AdminSidebar from "../AdminSidebar";
+import { FaBars } from "react-icons/fa";
+import AdminSidebar from "./AdminSidebar";
 
 function PaymentStatus() {
   const [showSidebar, setShowSidebar] = useState(false);

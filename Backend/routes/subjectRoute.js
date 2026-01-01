@@ -5,22 +5,22 @@ const Subject = require("../models/subjects");
 const isAdmin = require("../controllers/isAdmin");
 const { jwtAuthMiddleware } = require("../jwt");
 
-// ✅ GET all subjects (optionally filtered by semester or department)
+// GET all subjects (optionally filtered by semester or department)
 subjectRouter.get(
   "/getList",
-   jwtAuthMiddleware,
+  jwtAuthMiddleware,
   isAdmin,
   subjectController.getSubjects
 );
 
-// ✅ GET subject by Id
+// GET subject by Id
 subjectRouter.get(
   "/getList/:id",
   
   subjectController.getSubjectById
 );
 
-// ✅ POST create new subject
+// POST create new subject
 subjectRouter.post(
   "/create",
   jwtAuthMiddleware,
@@ -28,7 +28,7 @@ subjectRouter.post(
   subjectController.postCreate
 );
 
-// ✅ PUT update subject
+// PUT update subject
 subjectRouter.put(
   "/update/:id",
   jwtAuthMiddleware,
@@ -36,7 +36,7 @@ subjectRouter.put(
   subjectController.putUpdate
 );
 
-// ✅ DELETE subject
+// DELETE subject
 subjectRouter.delete(
   "/delete/:id",
   jwtAuthMiddleware,

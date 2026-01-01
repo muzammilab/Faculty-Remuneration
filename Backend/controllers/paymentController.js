@@ -83,66 +83,6 @@ exports.getSinglePayment = async (req, res) => {
   }
 };
 
-/* ORIGINAL
-exports.getSinglePayment = async (req, res) => {
-  try {
-    const { facultyId, subjectId, academicYear } = req.params; // ✅ include academicYear
-
-    // ✅ Add academicYear to query if present
-    const query = { facultyId };
-    if (academicYear) {
-      query.academicYear = academicYear;
-    }
-
-    const payment = await Payment.findOne(query)
-      .populate("facultyId", "name department") // ✅ Fetch faculty name & department
-      .populate("subjectBreakdown.subjectId", "name semester")
-      .lean();
-
-    if (!payment) {
-      return res.status(404).json({ message: "No payment found" });
-    }
-
-    // ✅ Prepare subject breakdown
-    let breakdown = payment.subjectBreakdown.map(item => ({
-      subjectId: item.subjectId._id,      
-      semester: item.subjectId.semester, // This is populated from Subject Db
-      subjectName: item.subjectId.name,  // This is populated from Subject Db
-      subjectTotal: item.subjectTotal,   // This is present in response data in subjectBreakdown
-      academicYear: payment.academicYear,// This is present in response data 
-      semesterType: payment.semesterType,
-      termTestAssessment: item.termTestAssessment,
-      oralPracticalAssessment: item.oralPracticalAssessment,
-      paperChecking: item.paperChecking
-    }));
-
-    // ✅ If subjectId present, filter by it
-    if (subjectId) {
-      breakdown = breakdown.filter(
-        item => item.subjectId.toString() === subjectId
-      );
-
-      if (breakdown.length === 0) {
-        return res.status(404).json({ message: "Subject not found in payment" });
-      }
-    }
-
-    // ✅ Send faculty info + breakdown
-    res.json({
-      payment,
-      facultyName: payment.facultyId.name,
-      department: payment.facultyId.department,
-      breakdown
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: "Error fetching payment details",
-      error: err.message
-    });
-  }
-}; */
-
 // Get all faculty members
 exports.getAllFaculty = async (req, res) => {
   try {
@@ -229,26 +169,6 @@ exports.getFacultySemesters = async (req, res) => {
   }
 };
 
-/* exports.getFacultySemesters = async (req, res) => {
-  try {
-    const { facultyId } = req.params;
-    const faculty = await Faculty.findById(facultyId);
-
-    if (!faculty) {
-      return res.status(404).json({ error: 'Faculty not found' });
-    }
-
-    // Extract unique semesters from assigned subjects
-    const semesters = [...new Set(faculty.assignedSubjects.map(subject => subject.semester))];
-    semesters.sort((a, b) => a - b);
-
-    res.json(semesters);
-  } catch (error) {
-    console.error('Error fetching faculty semesters:', error);
-    res.status(500).json({ error: 'Failed to fetch faculty semesters' });
-  }
-}; */
-
 // Get subjects for a specific faculty in a specific semester
 // GET /admin/payment/faculty/:facultyId/semester/:semester/year/:academicYear/semType/:semesterType/subjects
 // ✅ Get faculty subjects by academicYear + semType + semester
@@ -293,25 +213,6 @@ exports.getFacultySubjectsBySemester = async (req, res) => {
   }
 };
 
-/* exports.getFacultySubjectsBySemester = async (req, res) => {
-  try {
-    const { facultyId, semester } = req.params;
-    const faculty = await Faculty.findById(facultyId);
-
-    if (!faculty) {
-      return res.status(404).json({ error: 'Faculty not found' });
-    }
-
-    // Filter subjects by semester
-    const subjects = faculty.assignedSubjects.filter(subject => subject.semester === parseInt(semester));
-
-    res.json(subjects);
-  } catch (error) {
-    console.error('Error fetching faculty subjects:', error);
-    res.status(500).json({ error: 'Failed to fetch faculty subjects' });
-  }
-};  */
-
 // POST /admin/payment/create
 exports.postCreate = async (req, res) => {
   try {
@@ -325,8 +226,8 @@ exports.postCreate = async (req, res) => {
     // 1. Fetch faculty salary info
     const faculty = await Faculty.findById(facultyId);
     if (!faculty) return res.status(404).json({ error: "Faculty not found" });
-    const facultyName = faculty.name; // ✅ store name
-    const baseSalary = faculty.baseSalary || 0;
+    const facultyName = faculty.name; // store faculty name
+    // const baseSalary = faculty.baseSalary || 0;
     const travelAllowance = faculty.travelAllowance || 0;
 
     let totalRemuneration = 0;
@@ -342,13 +243,9 @@ exports.postCreate = async (req, res) => {
         subjectId: subject._id,
         subjectName: subjectItem.subjectName || subject.name,
         semester: subjectItem.semester || subject.semester,
+        department: subjectItem.department || subject.department, // <-- NEW 
         termTestAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
-        oralPracticalAssessment: {
-          applicable: false,
-          count: 0,
-          rate: 0,
-          amount: 0,
-        },
+        oralPracticalAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
         paperChecking: { applicable: false, count: 0, rate: 0, amount: 0 },
         subjectTotal: 0,
       };
@@ -363,23 +260,14 @@ exports.postCreate = async (req, res) => {
 
       // 💠 Oral/Practical
       if (subject.hasPractical) {
-        const { count = 0, rate = 0 } =
-          subjectItem.oralPracticalAssessment || {};
+        const { count = 0, rate = 0 } = subjectItem.oralPracticalAssessment || {};
         const amount = count * rate;
-        updated.oralPracticalAssessment = {
-          applicable: true,
-          count,
-          rate,
-          amount,
-        };
+        updated.oralPracticalAssessment = { applicable: true, count, rate, amount };
         subjectTotal += amount;
       }
 
       // 💠 Paper Checking
-      if (
-        subject.hasSemesterExam &&
-        faculty.designation !== "External Examiner"
-      ) {
+      if ( subject.hasSemesterExam && faculty.designation !== "External Examiner" ) {
         const { count = 0, rate = 0 } = subjectItem.paperChecking || {};
         const amount = count * rate;
         updated.paperChecking = { applicable: true, count, rate, amount };
@@ -392,6 +280,9 @@ exports.postCreate = async (req, res) => {
     }
 
     // 3. Check if a payment record already exists for same faculty/year/semType
+
+    console.log("Updated Subject Breakdown --> ",updatedSubjectBreakdown);
+
     let payment = await Payment.findOne({
       facultyId,
       academicYear,
@@ -399,7 +290,23 @@ exports.postCreate = async (req, res) => {
     });
 
     if (payment) {
-      // ✅ Append new subjects to subjectBreakdown
+
+      // NEW : 🚫 Check for duplicate subjects (same subjectId) 
+      const existingSubjectIds = payment.subjectBreakdown.map(
+        (s) => s.subjectId.toString()
+      );
+      
+      const duplicateSubjects = updatedSubjectBreakdown.filter((s) =>
+        existingSubjectIds.includes(s.subjectId.toString())
+      );
+      
+      if (duplicateSubjects.length > 0) {
+        return res.status(400).json({
+          error: `From Backend: Subject already exists for this faculty, academic year and semester type`,
+        });
+      }
+
+      // Append new subjects to subjectBreakdown
       payment.subjectBreakdown.push(...updatedSubjectBreakdown);
 
       // Recalculate totals
@@ -408,22 +315,19 @@ exports.postCreate = async (req, res) => {
         0
       );
 
-      payment.totalAmount =
-        /* payment.baseSalary + */
-        payment.travelAllowance +
-        payment.totalRemuneration;
+      payment.totalAmount = /* payment.baseSalary + */ payment.travelAllowance + payment.totalRemuneration;
 
       await payment.save();
       return res.status(200).json({ message: "Payment updated", payment });
     } else {
-      // ✅ Create new payment doc
+      // Create new payment doc
       const totalAmount = /* baseSalary + */ travelAllowance + totalRemuneration;
       payment = new Payment({
         facultyId,
         facultyName,
         academicYear,
         semesterType,
-        baseSalary,
+        // baseSalary,
         travelAllowance,
         subjectBreakdown: updatedSubjectBreakdown,
         totalRemuneration,
@@ -522,8 +426,7 @@ exports.putUpdate = async (req, res) => {
 
     // 5. Recalculate totals
     payment.totalRemuneration = totalRemuneration;
-    payment.totalAmount =
-      payment.baseSalary + payment.travelAllowance + totalRemuneration;
+    payment.totalAmount = payment.baseSalary + payment.travelAllowance + totalRemuneration;
 
     await payment.save();
 

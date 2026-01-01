@@ -4,7 +4,7 @@ const facultyManagementC = require("../controllers/facultyManagementC");
 const { jwtAuthMiddleware } = require("../jwt");
 const isAdmin = require("../controllers/isAdmin");
 
-// ✅ Add New Faculty
+// Add New Faculty
 facultyManagement.post(
   "/add",
   /* jwtAuthMiddleware,
@@ -28,7 +28,7 @@ facultyManagement.put(
   facultyManagementC.removeSubject
 );
 
-// ✅ Get All Faculties 
+// Get All Faculties 
 facultyManagement.get(
   "/getAll",
   jwtAuthMiddleware,
@@ -36,7 +36,7 @@ facultyManagement.get(
   facultyManagementC.getAllFaculties
 );
 
-// ✅ Get Single Faculty by ID
+// Get Single Faculty by ID
 facultyManagement.get(
   "/getSingle/:id",
   /* jwtAuthMiddleware,
@@ -44,7 +44,7 @@ facultyManagement.get(
   facultyManagementC.getSingleFaculty
 );
 
-// ✅ Edit/Update Faculty
+// Edit/Update Faculty
 facultyManagement.put(
   "/edit/:id",
   jwtAuthMiddleware,
@@ -52,7 +52,7 @@ facultyManagement.put(
   facultyManagementC.editFaculty
 );
 
-// ✅ Delete Faculty
+// Delete Faculty
 facultyManagement.delete(
   "/delete/:id",
   jwtAuthMiddleware,

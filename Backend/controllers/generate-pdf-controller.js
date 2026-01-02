@@ -125,11 +125,12 @@ exports.getPDF = async (req, res) => {
     doc
       .font("Helvetica-Bold")
       .fillColor("#2c3e50")
-      .text("Generated Date:", rightX, y);
+      .text("Payment Date:", rightX, y);
     doc
       .font("Helvetica")
       .fillColor("black")
-      .text(moment().format("DD-MM-YYYY"), rightX + 120, y);
+      .text(moment(payment.paidAt).format("DD-MM-YYYY"), rightX + 120, y);
+      // .text(moment().format("DD-MM-YYYY"), rightX + 120, y);
 
     y += spacing;
     doc.font("Helvetica-Bold").fillColor("#2c3e50").text("Email:", leftX, y);
@@ -140,7 +141,7 @@ exports.getPDF = async (req, res) => {
 
     doc.moveDown(2);
     // =============================
-    // 📋 Subject Breakdown Table
+    //   Subject Breakdown Table
     // =============================
 
     // Push down so it doesn't overlap previous block
@@ -166,7 +167,9 @@ exports.getPDF = async (req, res) => {
     const tableRowBg = "#f8f9f9";
     const tableBorder = "#b2bec3";
 
-    // ================= Header =================
+    // ================== 
+    //       Header 
+    // ==================
     doc
       .rect(tableLeftX, tableTopY, tableWidth, 24)
       .fillAndStroke(tableHeaderBg, tableBorder);
@@ -203,9 +206,11 @@ exports.getPDF = async (req, res) => {
     let yTable = tableTopY + 24;
     let totalBreakdown = 0;
 
-    // ================= Rows =================
+    // ================= 
+    //      Rows  
+    // =================
     payment.subjectBreakdown.forEach((entry, index) => {
-      const subjectName = entry.subjectId.name;
+      const subjectName = `${entry.subjectId.name}\n(${entry.subjectId.department})`;
       const subjectAmount = entry.subjectTotal;
       const subjectSem = entry.semester;
       totalBreakdown += subjectAmount;
@@ -273,7 +278,7 @@ exports.getPDF = async (req, res) => {
     doc.y = yTable + 20;
 
     // =============================
-    // 💵 Salary Breakdown (Enhanced)
+    //    Salary Breakdown Box 
     // =============================
     const salaryBoxY = doc.y;
     doc
@@ -308,7 +313,9 @@ exports.getPDF = async (req, res) => {
 
     doc.moveDown(3);
 
-    // 💰 Total Box (Enhanced)
+    // =============================
+    //          Total Box 
+    // =============================
     const boxY = doc.y;
     doc
       .rect(50, boxY, 500, 36)
@@ -330,7 +337,7 @@ exports.getPDF = async (req, res) => {
     doc.fillColor("black");
 
     // =============================
-    // 🔤 Amount in Words (Enhanced)
+    //       Amount in Words 
     // =============================
     const amountWords = toWords(payment.totalAmount).toUpperCase();
     doc
@@ -343,9 +350,9 @@ exports.getPDF = async (req, res) => {
       .fillColor("black")
       .text(`${amountWords} ONLY`, 180);
 
-    // =============================
-    // ✅ Footer (Enhanced)
-    // =============================
+    // ==========================
+    //          Footer 
+    // ==========================
     doc.moveDown(2);
 
     // Payment Mode
@@ -871,7 +878,7 @@ exports.getYearPDF = async (req, res) => {
       : 0;
 
     // Salary Totals
-    /*     const totalBase =
+    /* const totalBase =
       (oddPayment?.baseSalary || 0) + (evenPayment?.baseSalary || 0); */
     const totalTravel =
       (oddPayment?.travelAllowance || 0) + (evenPayment?.travelAllowance || 0);

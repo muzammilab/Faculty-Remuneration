@@ -398,13 +398,16 @@ function FacultyDetails() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                   <thead className="bg-gray-50">
                                     <tr>
-                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider pr-0">
+                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-73"> {/* OLD --> pr-0 , NEW --> w-85 */}
                                         Subject
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
+                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60"> {/* OLD --> w-24, NEW --> w-60 */}
                                         Semester
                                       </th>
-                                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60"> {/* OLD --> w-24, NEW --> w-60 */}
+                                        Branch
+                                      </th>
+                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         Amount
                                       </th>
                                     </tr>
@@ -422,18 +425,23 @@ function FacultyDetails() {
                                                 `/admin/facultymanager/details/${id}/subject/${item.subjectId}/${item.academicYear}`
                                               )
                                             }
-                                            className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline transition-colors"
+                                            className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline transition-colors cursor-pointer"
                                           >
                                             {item.subjectName}
                                           </button>
                                         </td>
-                                        <td className="px-4 py-4 w-24">
+                                        <td className="px-4 py-4 w-30 text-center">
                                           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                            Sem {item.semester}
+                                            Semester {item.semester}
                                           </span>
                                         </td>
-                                        <td className="px-4 py-4 text-right font-semibold text-lg text-emerald-700">
-                                          ₹
+                                        <td className="px-4 py-4 w-36 text-center">
+                                          <span className="inline-flex px-2 py-1 text-sm font-medium text-gray-900 whitespace-nowrap">
+                                            {item.department}
+                                          </span>
+                                        </td>
+                                        <td className="px-4 py-4 text-center font-semibold text-lg text-emerald-700">
+                                          ₹ {" "}
                                           {parseFloat(
                                             item.subjectTotal
                                           ).toLocaleString()}

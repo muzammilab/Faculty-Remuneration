@@ -31,6 +31,7 @@ function AddFacultyForm() {
     password: "",
     phone: "",
     travelAllowance: "",
+
     academicYear: "",
     semesterType: "",
     branch: "", // ← ADDed NEW LINE
@@ -106,7 +107,7 @@ function AddFacultyForm() {
           a.branch === formData.branch && // ← ADD THIS LINE
           a.semester === formData.semester &&
           a.subject === formData.subject &&
-          a.subjectName === formData.subjectName
+          a.subjectName === formData.subjectName // ← ADDed THIS LINE
       );
 
       if (!exists) {
@@ -118,7 +119,7 @@ function AddFacultyForm() {
             branch: formData.branch, // ← ADD THIS LINE
             semester: formData.semester,
             subject: formData.subject,
-            subjectName: formData.subjectName,
+            subjectName: formData.subjectName, // ← ADDed THIS LINE
           },
         ]);
       }
@@ -154,7 +155,7 @@ function AddFacultyForm() {
         branch: "", // ← NEW ADDed
         semester: "",
         subject: "",
-        subjectName: "",
+        subjectName: "", // ← ADDed THIS LINE
       });
       setAssignedSubjects([]);
       setTimeout(() => setSuccess(false), 5000);

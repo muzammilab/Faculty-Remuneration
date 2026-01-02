@@ -35,10 +35,17 @@ function SubjectRemunerationDetails() {
           referenceNumber: `REF-${Date.now()}`,
           breakdown: [
             {
-              component: "Term Work Papers Assessed",
+              component: "Term Test Papers Assessed",
               rate: breakdownItem.termTestAssessment.rate,
               quantity: breakdownItem.termTestAssessment.count,
               amount: breakdownItem.termTestAssessment.amount,
+              color: "blue",
+            },
+            {
+              component: "Term Work Papers Assessed",
+              rate: breakdownItem.termWorkAssessment.rate,
+              quantity: breakdownItem.termWorkAssessment.count,
+              amount: breakdownItem.termWorkAssessment.amount,
               color: "blue",
             },
             {

@@ -28,6 +28,12 @@ const paymentSchema = new mongoose.Schema(
           rate: { type: Number, default: 0 },
           amount: { type: Number, default: 0 },
         },
+        termWorkAssessment: {
+          applicable: { type: Boolean, default: false },
+          count: { type: Number, default: 0 },
+          rate: { type: Number, default: 0 },
+          amount: { type: Number, default: 0 },
+        },
         oralPracticalAssessment: {
           applicable: { type: Boolean, default: false },
           count: { type: Number, default: 0 },

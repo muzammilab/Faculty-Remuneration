@@ -39,6 +39,7 @@ function UpdateAssignment() {
     branch: "", // ← NEW
     semester: "",
     subject: "",
+    subjectName: "", // ← NEW
     subjects: [],
   });
 
@@ -46,7 +47,7 @@ function UpdateAssignment() {
   useEffect(() => {
     if (id) {
       dispatch(fetchFacultyById(id));
-      console.log("Faculty details are", faculty);
+      console.log("Faculty details are ", faculty);
     }
   }, [id, dispatch]);
 
@@ -89,7 +90,7 @@ function UpdateAssignment() {
 
   const handleAddSubject = (e) => {
     e.preventDefault();
-    if (formData.semester && formData.subject && formData.branch) { // ← Added formData.branch
+    if (formData.semester && formData.subject && formData.branch) { // ← ADDed formData.branch
       if (
         !formData.subjects.some(
           (s) => s.name === formData.subject && s.semester === formData.semester
@@ -99,7 +100,7 @@ function UpdateAssignment() {
           ...prev,
           subjects: [
             ...prev.subjects,
-            { name: formData.subject, semester: formData.semester, branch: formData.branch /* ← NEW branch field */ },
+            { subjectId: formData.subject, name: formData.subjectName, semester: formData.semester, branch: formData.branch /* ← NEW branch field */ },
           ],
         }));
         setFormData((prev) => ({ ...prev, subject: "" }));
@@ -136,6 +137,7 @@ function UpdateAssignment() {
         branch: "",  // ← NEW
         semester: "",
         subject: "",
+        subjectName: "", // ← NEW
         subjects: [],
       });
 
@@ -237,7 +239,7 @@ function UpdateAssignment() {
                         </select>
                         {formData.academicYear && (
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-3">
-                            📅 Selected: {formData.academicYear}
+                            Selected: {formData.academicYear}
                           </span>
                         )}
                       </div>
@@ -361,23 +363,27 @@ function UpdateAssignment() {
                           </label>
                           <Select
                             options={subjectOptions.map((sub) => ({
-                              value: sub,
-                              label: sub,
-                            }))}
-                            value={
-                              formData.subject
-                                ? {
-                                    value: formData.subject,
-                                    label: formData.subject,
-                                  }
-                                : null
-                            }
-                            onChange={(selected) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                subject: selected ? selected.value : "",
-                              }))
-                            }
+      value: sub.subjectId,
+      label: sub.name,
+    }))}
+
+    value={
+      formData.subject
+        ? {
+            value: formData.subject,
+            label: formData.subjectName,
+          }
+        : null
+    }
+
+    onChange={(selected) => {
+      console.log('Selected:', selected);
+      setFormData((prev) => ({
+        ...prev,
+        subject: selected ? selected.value : "",
+        subjectName: selected ? selected.label : "",
+      }))
+    }}
                             placeholder="Select Subject"
                             isDisabled={!formData.semester || !formData.branch}
                             className="basic-select"

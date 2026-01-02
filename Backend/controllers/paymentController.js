@@ -50,7 +50,9 @@ exports.getSinglePayment = async (req, res) => {
         subjectTotal: item.subjectTotal,
         academicYear: p.academicYear,
         semesterType: p.semesterType, // <- keeps Odd/Even
+          department: item.department, // <-- NEW
         termTestAssessment: item.termTestAssessment,
+        termWorkAssessment: item.termWorkAssessment,
         oralPracticalAssessment: item.oralPracticalAssessment,
         paperChecking: item.paperChecking,
       }))
@@ -245,6 +247,7 @@ exports.postCreate = async (req, res) => {
         semester: subjectItem.semester || subject.semester,
         department: subjectItem.department || subject.department, // <-- NEW 
         termTestAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
+        termWorkAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
         oralPracticalAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
         paperChecking: { applicable: false, count: 0, rate: 0, amount: 0 },
         subjectTotal: 0,
@@ -255,6 +258,14 @@ exports.postCreate = async (req, res) => {
         const { count = 0, rate = 0 } = subjectItem.termTestAssessment || {};
         const amount = count * rate;
         updated.termTestAssessment = { applicable: true, count, rate, amount };
+        subjectTotal += amount;
+      }
+
+      // 💠 Term Work
+      if (subject.hasTermWork && faculty.designation !== "External Examiner") {
+        const { count = 0, rate = 0 } = subjectItem.termWorkAssessment || {};
+        const amount = count * rate;
+        updated.termWorkAssessment = { applicable: true, count, rate, amount };
         subjectTotal += amount;
       }
 
@@ -344,7 +355,6 @@ exports.postCreate = async (req, res) => {
 };
 
 // controllers/paymentController.js
-
 exports.putUpdate = async (req, res) => {
   try {
     const { paymentId } = req.params;

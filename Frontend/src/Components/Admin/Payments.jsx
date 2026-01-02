@@ -28,6 +28,8 @@ function Payments() {
   // State variables for remuneration form
   const [selectedSubject, setSelectedSubject] = useState("");
   // const [selectedSubjectDetails, setSelectedSubjectDetails] = useState(null);
+  const [termTestPapers, setTermTestPapers] = useState("");
+  const [termTestRate, setTermTestRate] = useState("");
   const [termWorkPapers, setTermWorkPapers] = useState("");
   const [termWorkRate, setTermWorkRate] = useState("");
   const [oralPapers, setOralPapers] = useState("");
@@ -134,6 +136,8 @@ function Payments() {
     // setSelectedSubject(subjectName);
 
     // Reset form fields
+    setTermTestPapers("");
+    setTermTestRate("");
     setTermWorkPapers("");
     setTermWorkRate("");
     setOralPapers("");
@@ -186,7 +190,10 @@ function Payments() {
       console.log("Available subjects:", subjects);
 
       // Calculate the total payment locally (no backend call for individual subjects)
-      const termWorkTotal = selectedSubjectDetails?.hasTermTest
+      const termTestTotal = selectedSubjectDetails?.hasTermTest
+        ? (parseInt(termTestPapers) || 0) * (parseInt(termTestRate) || 0)
+        : 0;
+      const termWorkTotal = selectedSubjectDetails?.hasTermWork
         ? (parseInt(termWorkPapers) || 0) * (parseInt(termWorkRate) || 0)
         : 0;
       const oralTotal = selectedSubjectDetails?.hasPractical
@@ -195,7 +202,7 @@ function Payments() {
       const semesterTotal = selectedSubjectDetails?.hasSemesterExam
         ? (parseInt(semesterPapers) || 0) * (parseInt(semesterRate) || 0)
         : 0;
-      const totalPayment = termWorkTotal + oralTotal + semesterTotal;
+      const totalPayment = termTestTotal + termWorkTotal + oralTotal + semesterTotal;
 
       setTotalPayment(totalPayment);
 
@@ -206,6 +213,8 @@ function Payments() {
         department: selectedSubject.department,
         semester: selectedSubjectObj.semester,
         semesterLabel: JSON.parse(selectedSemester).label,
+        termTestPapers: parseInt(termTestPapers) || 0,
+        termTestRate: parseInt(termTestRate) || 0,
         termWorkPapers: parseInt(termWorkPapers) || 0,
         termWorkRate: parseInt(termWorkRate) || 0,
         oralPapers: parseInt(oralPapers) || 0,
@@ -221,6 +230,8 @@ function Payments() {
 
       // Reset form
       setSelectedSubject("");
+      setTermTestPapers("");
+      setTermTestRate("");
       setTermWorkPapers("");
       setTermWorkRate("");
       setOralPapers("");
@@ -263,7 +274,11 @@ function Payments() {
               subjectName: remuneration.subjectName, // ADDed
               department: remuneration.department, // <-- NEW 
               semester: remuneration.semester, // ADDed
-              termTestAssessment: {
+              termTestAssessment: {           // Added 
+                count: remuneration.termTestPapers,
+                rate: remuneration.termTestRate,
+              },
+              termWorkAssessment: {
                 count: remuneration.termWorkPapers,
                 rate: remuneration.termWorkRate,
               },
@@ -337,7 +352,11 @@ function Payments() {
             subjectName: remuneration.subjectName, // ADDed
             department: remuneration.department, // <-- NEW 
             semester: remuneration.semester,
-            termTestAssessment: {
+            termTestAssessment: {           // Added 
+              count: remuneration.termTestPapers,
+              rate: remuneration.termTestRate,
+            },
+            termWorkAssessment: {
               count: remuneration.termWorkPapers,
               rate: remuneration.termWorkRate,
             },
@@ -390,6 +409,8 @@ function Payments() {
         setCalculatedRemunerations([]);
         // Reset form
         setSelectedSubject("");
+        setTermTestPapers("");
+        setTermTestRate("");
         setTermWorkPapers("");
         setTermWorkRate("");
         setOralPapers("");
@@ -653,8 +674,18 @@ function Payments() {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"} Term
-                        Work
+                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"}{" "} 
+                        Term Test
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasTermWork
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasTermWork ? "✓" : "✗"}{" "} 
+                        Term Work
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -735,6 +766,40 @@ function Payments() {
                     }}
                   />
                 </div>
+
+                {/* Term Test Assessment */}
+               {selectedSubjectDetails?.hasTermTest &&
+                 facultyData?.designation !== "External Examiner" && (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         No. of Term Test Papers
+                       </label>
+                       <input
+                         type="number"
+                         value={termTestPapers}
+                         onChange={(e) => setTermTestPapers(e.target.value)}
+                         className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                       />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Rate per Paper
+                       </label>
+                       <div className="relative">
+                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                           ₹
+                         </span>
+                         <input
+                           type="number"
+                           value={termTestRate}
+                           onChange={(e) => setTermTestRate(e.target.value)}
+                           className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                         />
+                       </div>
+                     </div>
+                   </div>
+                )}
 
                 {/* Term Work Assessment */}
                 {selectedSubjectDetails?.hasTermTest &&
@@ -886,6 +951,13 @@ function Payments() {
                           Semester
                         </th>
                         {calculatedRemunerations.some(
+                          (r) => r.termTestPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Term Test
+                          </th>
+                        )}
+                        {calculatedRemunerations.some(
                           (r) => r.termWorkPapers > 0
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -929,6 +1001,22 @@ function Payments() {
                             </span>
                           </td>
                           {calculatedRemunerations.some(
+                            (r) => r.termTestPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                              {remuneration.termTestPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.termTestPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹ {remuneration.termTestRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">---</span>
+                              )}
+                            </td>
+                          )}
+                          {calculatedRemunerations.some(
                             (r) => r.termWorkPapers > 0
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -940,7 +1028,7 @@ function Payments() {
                                   </span>
                                 </span>
                               ) : (
-                                <span className="text-gray-400">-</span>
+                                <span className="text-gray-400">---</span>
                               )}
                             </td>
                           )}

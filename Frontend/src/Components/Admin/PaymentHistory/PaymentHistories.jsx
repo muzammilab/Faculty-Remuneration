@@ -4,48 +4,29 @@ import { useNavigate } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 import AdminMobileSidebar from "../AdminMobileSidebar";
 import AdminNavbar from "../AdminNavbar";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPaidPayments } from "../../../store/paymentSlice";
 
 function PaymentHistories() {
+  const dispatch = useDispatch();
+
   const [showSidebar, setShowSidebar] = useState(false);
   const navigate = useNavigate();
-
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterFaculty, setFilterFaculty] = useState("");
 
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
 
+  const { paidPayments, loading } = useSelector((state) => state.paymentSlice);
+
   // Fetch all payments on component mount
   useEffect(() => {
-    fetchPayments();
-  }, []);
-
-  // Fetch all payments from MongoDB
-  const fetchPayments = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        "http://localhost:3002/admin/payment/getAll"
-      );
-      // Filter ONLY PAID payments
-      const paidPayments = response.data.filter((payment) => payment.status === "paid");
-
-      console.log("Fetched PAID payments For Payment History Page : ");
-      console.log(paidPayments);
-      setPayments(paidPayments);
-    } catch (error) {
-      console.error("Error fetching payments:", error);
-      alert("Failed to fetch payment records");
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchPaidPayments());
+  }, [dispatch]);
 
   // Filter payments based on search and filters
-  const filteredPayments = payments.filter((payment) => {
+  const filteredPayments = paidPayments.filter((payment) => {
     const facultyName = payment.facultyId?.name?.toLowerCase() || "";
     const designation = payment.facultyId?.designation?.toLowerCase() || "";
     const academicYear = payment.academicYear?.toString().toLowerCase() || "";
@@ -85,7 +66,10 @@ function PaymentHistories() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
+        <AdminMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
+        />
 
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
@@ -134,7 +118,7 @@ function PaymentHistories() {
                 </span>
               </div>
 
-              {loading ? (
+              {loading.paidList ? (
                 <div className="px-6 py-20 text-center">
                   <div className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                   <p className="mt-4 text-sm text-gray-500">

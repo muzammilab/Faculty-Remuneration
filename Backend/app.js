@@ -7,8 +7,6 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 
-// const userRouter = require("./routes/userRoute");
-// const candidateRouter = require("./routes/candidateRoute");
 const facultyAuthRoute = require("./routes/facultyAuthRoute");
 const adminAuthRoute = require("./routes/adminAuthRoute");
 const subjectRouter = require("./routes/subjectRoute");
@@ -19,7 +17,11 @@ const forgetPasswordRouter = require("./routes/forgetPasswordRoute");
 const changePasswordRouter = require("./routes/changePasswordRoute");
 const checkRoleRoute = require("./routes/checkRole");
 const amountPayRouter = require("./routes/amountPayRoute");
+const passport = require("passport");
+const googleAuthRoute = require("./routes/googleAuthRoute");
+require("./google");
 
+const MONGO_DB_URL = process.env.MONGO_URI;
 const app = express();
 
 // app.use(
@@ -30,17 +32,18 @@ const app = express();
 // );
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_DEV_URL,
     credentials: true, // if using cookies / sessions
   })
 );
+
+app.use(passport.initialize());
 
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const MONGO_DB_URL = process.env.MONGO_URI;
-
+app.use("/", googleAuthRoute);
 app.use("/", checkRoleRoute);
 app.use("/faculty", facultyAuthRoute);
 app.use("/admin", adminAuthRoute);

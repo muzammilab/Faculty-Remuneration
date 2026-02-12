@@ -1,34 +1,56 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../store/authSlice";
+import api from "../utils/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 function Login() {
+  const dispatch = useDispatch();
   const [loginRole, setLoginRole] = useState("faculty");
-  const [formData, setFormData] = useState({ username: "", password: "", adminId: "" });
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    adminId: "",
+  });
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "not_registered") {
+      toast.error("You are not registered by admin yet.");
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = loginRole === "faculty"
-      ? { email: formData.username, password: formData.password }
-      : { email: formData.adminId, password: formData.password };
+    const payload =
+      loginRole === "faculty"
+        ? { email: formData.username, password: formData.password }
+        : { email: formData.adminId, password: formData.password };
 
     try {
-      const url = loginRole === "admin"
-        ? "http://localhost:3002/admin/login"
-        : "http://localhost:3002/faculty/login";
-
-      const response = await axios.post(url, payload);
+      const url = loginRole === "admin" ? "/admin/login" : "/faculty/login";
+      const response = await api.post(url, payload);
 
       if (response.data.token) {
-        toast.success(`${loginRole.charAt(0).toUpperCase() + loginRole.slice(1)} Login Successful`);
+        const role = loginRole;
+        dispatch(loginSuccess({ role }));
+        toast.success(
+          `${
+            loginRole.charAt(0).toUpperCase() + loginRole.slice(1)
+          } Login Successful ✅`
+        );
         localStorage.setItem("token", response.data.token);
+        // toast.success(`${loginRole.charAt(0).toUpperCase() + loginRole.slice(1)} Login Successful`);
+        // localStorage.setItem("token", response.data.token);
+
         if (loginRole === "faculty") {
           localStorage.setItem("role", "faculty");
           localStorage.setItem("facultyId", response.data.id);
@@ -40,18 +62,22 @@ function Login() {
         toast.error("Unexpected response from server");
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Login failed. Check console.");
+      toast.error(
+        err?.response?.data?.message || "Login failed. Check console."
+      );
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative"
-         style={{
-           background: "linear-gradient(135deg, rgba(13, 110, 253, 0.5), rgba(13, 110, 253, 0.25)), url('/college-banner.jpg')",
-           backgroundSize: "cover",
-           backgroundPosition: "center",
-           backgroundAttachment: "fixed"
-         }}
+    <div
+      className="min-h-screen flex items-center justify-center p-6 relative"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(13, 110, 253, 0.5), rgba(13, 110, 253, 0.25)), url('/college-banner.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
     >
       {/* Floating decorative circles - EXACT same as original */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -79,9 +105,9 @@ function Login() {
       >
         {/* Header with RCOE Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="/rcoe-logo.jpg" 
-            alt="RCOE Logo" 
+          <img
+            src="/rcoe-logo.jpg"
+            alt="RCOE Logo"
             className="w-16 h-16 mx-auto mb-4 rounded-xl shadow-lg object-cover border-2 border-gray-200"
           />
           <h3 className="text-2xl font-bold text-blue-600 mb-1 tracking-tight">
@@ -149,12 +175,15 @@ function Login() {
           {/* Checkbox & Forgot Password - EXACT layout */}
           <div className="flex justify-between items-center pt-1">
             <div className="flex items-center space-x-3">
-              <input 
-                type="checkbox" 
-                className="w-5 h-5 text-blue-600 bg-gray-100 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 shadow-sm" 
-                id="rememberMe" 
+              <input
+                type="checkbox"
+                className="w-5 h-5 text-blue-600 bg-gray-100 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 shadow-sm"
+                id="rememberMe"
               />
-              <label htmlFor="rememberMe" className="text-sm text-gray-700 font-medium cursor-pointer select-none">
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-gray-700 font-medium cursor-pointer select-none"
+              >
                 Remember Me
               </label>
             </div>
@@ -177,6 +206,23 @@ function Login() {
             Login
           </motion.button>
         </form>
+        <div className="flex items-center my-6">
+          <hr className="flex-grow border-t border-gray-300" />
+          <span className="mx-4 text-gray-500 font-medium">OR</span>
+          <hr className="flex-grow border-t border-gray-300" />
+        </div>
+
+        {/* Google OAuth Button */}
+        <motion.button
+          type="button"
+          onClick={() => (window.location.href = `${API_BASE}/auth/google`)}
+          className="w-full bg-white border-2 border-gray-300 hover:border-blue-500 text-gray-700 font-bold py-4 px-6 rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <img src="/google-icon.png" className="w-5 h-5" />
+          Continue with Google
+        </motion.button>
 
         {/* Footer - EXACT same */}
         <p className="text-center text-gray-500 mt-6 text-xs tracking-wide">

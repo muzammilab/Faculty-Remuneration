@@ -1,76 +1,83 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const Faculty = require("../models/faculty");
 const Admin = require("../models/admin");
+const Faculty = require("../models/faculty");
 const nodemailer = require("nodemailer");
-require("dotenv").config();
+const bcrypt = require("bcryptjs");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const FRONTEND_RESET_URL = "http://localhost:5173/reset-password"; // Or your real frontend link
-
-// Send Reset Link
 exports.forgotPassword = async (req, res) => {
   const { email, role } = req.body;
+  const Model = role === "admin" ? Admin : Faculty;
 
-  try {
-    const Model = role === "admin" ? Admin : Faculty;
-    const user = await Model.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+  const user = await Model.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-    const token = jwt.sign({ id: user._id, role }, JWT_SECRET, {
-      expiresIn: "15m",
-    });
-    const resetLink = `${FRONTEND_RESET_URL}/${token}`;
-    // Send Email (for demo using ethereal)
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // or your SMTP service
-      auth: {
-        user: "shahbazshaikh485@gmail.com",
-        pass: process.env.PASSWORD,
-      },
-    });
+  // const otp = otpGenerator.generate(6, {
+  //   upperCase: false,
+  //   specialChars: false,
+  // });
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const info = await transporter.sendMail({
-      from: "shahbazshaikh485@gmail.com",
-      to: email,
-      subject: "Reset Password Link",
-      html: `<p>Click to reset password: <a href="${resetLink}">Reset Password</a></p>`,
-    });
-    console.log(resetLink);
+  user.resetOTP = otp;
+  user.resetOTPExpiry = Date.now() + 10 * 60 * 1000;
+  user.resetOTPAttempts = 0;
+  await user.save();
 
-    if (!info.messageId) {
-      // Fallback if nodemailer didn't return a proper ID
-      return res.status(500).json({ error: "Email failed to send." });
-    }
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // SSL
+    auth: {
+      user: process.env.EMAIL_USER,
+      // user: "shahbazshaikh485@gmail.com",
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 
-    console.log("✅ Email sent: ", info.messageId);
+  //  const info = await transporter.sendMail({
+  //    from: "shahbazshaikh485@gmail.com",
+  //    to: email,
+  //    subject: "Reset Password Link",
+  //    html: `<p>Click to reset password: <a href="${resetLink}">Reset Password</a></p>`,
+  //  });
 
-    // res.json({ message: "Reset link sent to email" });
-    res.json({
-      message: "Reset link generated",
-      resetLink: `${FRONTEND_RESET_URL}/${token}`,
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Error sending reset link");
-  }
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your Password Reset OTP",
+    html: `<h2>Your OTP is ${otp}</h2><p>Valid for 10 minutes.</p>`,
+  });
+
+  res.json({ message: "OTP sent to email" });
 };
 
-// Handle Reset Password
 exports.resetPassword = async (req, res) => {
-  const { token } = req.params;
-  const { newPassword } = req.body;
+  const { email, role, otp, newPassword, confirmPassword } = req.body;
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const Model = decoded.role === "admin" ? Admin : Faculty;
+  if (newPassword !== confirmPassword)
+    return res.status(400).json({ message: "Passwords do not match" });
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await Model.findByIdAndUpdate(decoded.id, { password: hashedPassword });
+  const Model = role === "admin" ? Admin : Faculty;
+  const user = await Model.findOne({ email });
 
-    res.json({ message: "Password updated successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ message: "Invalid or expired token" });
+  if (!user || !user.resetOTP)
+    return res.status(400).json({ message: "OTP not requested" });
+
+  if (user.resetOTPAttempts >= 5)
+    return res.status(403).json({ message: "Too many attempts. Try later." });
+
+  if (Date.now() > user.resetOTPExpiry)
+    return res.status(400).json({ message: "OTP expired" });
+
+  if (user.resetOTP !== otp) {
+    user.resetOTPAttempts++;
+    await user.save();
+    return res.status(400).json({ message: "Invalid OTP" });
   }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetOTP = null;
+  user.resetOTPExpiry = null;
+  user.resetOTPAttempts = 0;
+  await user.save();
+
+  res.json({ message: "Password reset successful" });
 };

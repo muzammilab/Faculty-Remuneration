@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
-import { FaBars, FaEdit, FaArrowLeft, FaUser, FaPhone, FaBuilding, FaEnvelope, FaBook, FaDollarSign } from "react-icons/fa";
+import {
+  FaBars,
+  FaEdit,
+  FaArrowLeft,
+  FaUser,
+  FaPhone,
+  FaBuilding,
+  FaEnvelope,
+  FaBook,
+  FaDollarSign,
+} from "react-icons/fa";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 import { useNavigate, useParams } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
-import axios from "axios";
 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFacultyById } from "../../../store/facultySlice";
+import api from "../../../utils/api";
 
 function FacultyDetails() {
   const { id } = useParams();
@@ -15,7 +26,11 @@ function FacultyDetails() {
   // const [loading, setLoading] = useState(true);
 
   const dispatch = useDispatch();
-  const { facultyDetails: faculty, loading, error } = useSelector((state) => state.facultySlice);
+  const {
+    facultyDetails: faculty,
+    loading,
+    error,
+  } = useSelector((state) => state.facultySlice);
   const isLoading = loading.fetchFacultyByIdLoading;
 
   const handleGoBack = () => navigate("/admin/facultymanager");
@@ -41,9 +56,7 @@ function FacultyDetails() {
       try {
         const results = await Promise.all(
           uniqueYears.map((year) =>
-            axios.get(
-              `http://localhost:3002/admin/payment/getSinglePayment/${id}/${year}`
-            )
+            api.get(`/admin/payment/getSinglePayment/${id}/${year}`)
           )
         );
         const merged = results.flatMap((r) => r.data.breakdown || []);
@@ -58,7 +71,6 @@ function FacultyDetails() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
-
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
 
@@ -257,7 +269,10 @@ function FacultyDetails() {
                   <button
                     onClick={() =>
                       navigate(`/admin/facultymanager/update/${id}`, {
-                        state: { facultyName: faculty.name, facultyDepartment: faculty.department },
+                        state: {
+                          facultyName: faculty.name,
+                          facultyDepartment: faculty.department,
+                        },
                       })
                     }
                     className="flex items-center gap-2 px-4 py-2 border border-blue-300 rounded-xl text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all cursor-pointer"
@@ -398,13 +413,19 @@ function FacultyDetails() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                   <thead className="bg-gray-50">
                                     <tr>
-                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-73"> {/* OLD --> pr-0 , NEW --> w-85 */}
+                                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-73">
+                                        {" "}
+                                        {/* OLD --> pr-0 , NEW --> w-85 */}
                                         Subject
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60"> {/* OLD --> w-24, NEW --> w-60 */}
+                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60">
+                                        {" "}
+                                        {/* OLD --> w-24, NEW --> w-60 */}
                                         Semester
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60"> {/* OLD --> w-24, NEW --> w-60 */}
+                                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-60">
+                                        {" "}
+                                        {/* OLD --> w-24, NEW --> w-60 */}
                                         Branch
                                       </th>
                                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -441,7 +462,7 @@ function FacultyDetails() {
                                           </span>
                                         </td>
                                         <td className="px-4 py-4 text-center font-semibold text-lg text-emerald-700">
-                                          ₹ {" "}
+                                          ₹{" "}
                                           {parseFloat(
                                             item.subjectTotal
                                           ).toLocaleString()}
@@ -459,7 +480,7 @@ function FacultyDetails() {
                                               semGroup[0]?.paymentId;
                                             if (paymentId) {
                                               window.open(
-                                                `http://localhost:3002/payment/generate-pdf/${paymentId}`,
+                                                `${API_BASE}/payment/generate-pdf/${paymentId}`,
                                                 "_blank"
                                               );
                                             }
@@ -483,7 +504,7 @@ function FacultyDetails() {
                             <button
                               onClick={() =>
                                 window.open(
-                                  `http://localhost:3002/payment/generate-pdf/${id}/${year}`,
+                                  `${API_BASE}/payment/generate-pdf/${id}/${year}`,
                                   "_blank"
                                 )
                               }

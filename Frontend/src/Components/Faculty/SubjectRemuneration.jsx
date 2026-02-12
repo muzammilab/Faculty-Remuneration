@@ -1,77 +1,46 @@
 import { useEffect, useState } from "react";
-import { FaPrint, FaFileInvoiceDollar, FaCalculator, FaMoneyBillWave, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
+import {
+  FaPrint,
+  FaFileInvoiceDollar,
+  FaCalculator,
+  FaMoneyBillWave,
+  FaInfoCircle,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import FacultySidebar from "./FacultySidebar";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  clearSubjectRemuneration,
+  fetchSubjectRemuneration,
+} from "../../store/subjectRemunerationSlice";
 
 function SubjectRemuneration() {
+  const dispatch = useDispatch();
   const { id, subjectId, academicYear } = useParams();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [subjectData, setSubjectData] = useState(null);
+  const {
+    data: subjectData,
+    loading,
+    error,
+  } = useSelector((state) => state.subjectRemuneration);
 
   useEffect(() => {
     const facultyId = localStorage.getItem("facultyId");
-    const fetchFacultyDetails = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(
-          `http://localhost:3002/admin/payment/getSinglePayment/${facultyId}/${subjectId}/${academicYear}`
-        );
-        console.log(
-          "Fetched Subject Payments for SubjectRemuneration page for Faculty :"
-        );
-        console.log(res.data);
-
-        const breakdownItem = res.data.breakdown[0];
-
-        setSubjectData({
-          facultyName: res.data.facultyName,
-          department: res.data.department,
-          subjectName: breakdownItem.subjectName,
-          academicYear: breakdownItem.academicYear,
-          semesterType: breakdownItem.semesterType,
-          semester: breakdownItem.semester,
-          total: breakdownItem.subjectTotal,
-          referenceNumber: `REF-${Date.now()}`,
-          breakdown: [
-            {
-              component: "Term Work Papers Assessed",
-              rate: breakdownItem.termTestAssessment.rate,
-              quantity: breakdownItem.termTestAssessment.count,
-              amount: breakdownItem.termTestAssessment.amount,
-              color: "blue",
-            },
-            {
-              component: "Oral/Practicals",
-              rate: breakdownItem.oralPracticalAssessment.rate,
-              quantity: breakdownItem.oralPracticalAssessment.count,
-              amount: breakdownItem.oralPracticalAssessment.amount,
-              color: "emerald",
-            },
-            {
-              component: "Semester Papers Assessed",
-              rate: breakdownItem.paperChecking.rate,
-              quantity: breakdownItem.paperChecking.count,
-              amount: breakdownItem.paperChecking.amount,
-              color: "cyan",
-            },
-          ],
-        });
-      } catch (err) {
-        console.error("❌ Error fetching remuneration:", err);
-        setError(
-          err.response?.data?.message || "Failed to load remuneration details"
-        );
-      } finally {
-        setLoading(false);
-      }
+    if ((facultyId && subjectId, academicYear)) {
+      dispatch(
+        fetchSubjectRemuneration({
+          facultyId,
+          subjectId,
+          academicYear,
+        })
+      );
+    }
+    return () => {
+      dispatch(clearSubjectRemuneration());
     };
-
-    fetchFacultyDetails();
-  }, [id, subjectId, academicYear]);
+  }, [dispatch, id, subjectId, academicYear]);
 
   const handleGoBack = () => {
     navigate(`/faculty/payments`);

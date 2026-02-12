@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
-import { FaUser, FaBus, FaChalkboardTeacher, FaEdit, FaBook, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaUser,
+  FaBus,
+  FaChalkboardTeacher,
+  FaEdit,
+  FaBook,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import AdminNavbar from "../Admin/AdminNavbar";
 import FacultyMobileSidebar from "./FacultyMobileSidebar";
 import FacultyDesktopSidebar from "./FacultyDesktopSidebar";
-import axios from "axios";
+import api from "../../utils/api";
 
 function FacultyDashboard() {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -25,8 +32,8 @@ function FacultyDashboard() {
 
     const fetchFacultyData = async () => {
       try {
-        const facultyRes = await axios.get(
-          `http://localhost:3002/admin/faculty/getSingle/${facultyId}`
+        const facultyRes = await api.get(
+          `/admin/faculty/getSingle/${facultyId}`
         );
         console.log("Getting Faculty Details for Dashboard");
         console.log(facultyRes.data);
@@ -49,15 +56,24 @@ function FacultyDashboard() {
       0
     ) || 0;
 
-  const { name, email, phone, department, designation, employeeId, travelAllowance, assignedSubjects } = facultyData || {};
+  const {
+    name,
+    email,
+    phone,
+    department,
+    designation,
+    employeeId,
+    travelAllowance,
+    assignedSubjects,
+  } = facultyData || {};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <FacultyMobileSidebar 
-          handleSidebarClose = {handleSidebarClose} 
-          showSidebar = {showSidebar} 
+        <FacultyMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
         />
 
         {/* Desktop Sidebar */}

@@ -27,12 +27,43 @@ import Unauthorized from "./Components/UnAuthorized";
 import { Toaster } from "react-hot-toast";
 import SubjectsManagement from "./Components/Admin/Subject Manager/SubjectManagement";
 import LandingPage from "./Components/LandingPage";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserRole } from "./store/authSlice";
+import LoaderUI from "./Components/LoaderUI";
+import { useEffect } from "react";
+import OAuthSuccess from "./Components/OAuthSuccess";
 
 function App() {
+  const dispatch = useDispatch();
+  const { isLoggedIn, userRole, authChecked } = useSelector(
+    (state) => state.authSlice
+  );
+
+  useEffect(() => {
+    dispatch(fetchUserRole());
+  }, [dispatch]);
+
   return (
     <>
+      {!authChecked && <LoaderUI />}
       <Routes>
-        <Route path = "/" element={<LandingPage />}></Route>
+        <Route path="/oauth-success" element={<OAuthSuccess />} />
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? (
+              <Navigate
+                to={
+                  userRole === "admin"
+                    ? "/admin/payments"
+                    : "/faculty/dashboard"
+                }
+              />
+            ) : (
+              <LandingPage />
+            )
+          }
+        ></Route>
         <Route path="/login" element={<Login />}></Route>
         <Route path="/logout" element={<Logout />}></Route>
 
@@ -98,8 +129,10 @@ function App() {
 
         {/* Only faculty */}
         <Route element={<ProtectedRoute allowedRoles={["faculty"]} />}>
-          <Route path="/faculty/dashboard" element={<FacultyDashboard />}>
-          </Route>
+          <Route
+            path="/faculty/dashboard"
+            element={<FacultyDashboard />}
+          ></Route>
 
           <Route path="/faculty/payments" element={<FacultyPayments />}>
             {" "}
@@ -118,16 +151,12 @@ function App() {
         </Route>
 
         {/* Forgot password */}
-        <Route
-          path="/reset-password/:token"
-          element={<ResetPassword />}
-        ></Route>
+        <Route path="/verify-otp" element={<ResetPassword />}></Route>
 
         <Route path="/forgot-password" element={<ForgotPassword />}></Route>
 
         {/* Unauthorized page */}
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
       </Routes>
       <Toaster />
     </>

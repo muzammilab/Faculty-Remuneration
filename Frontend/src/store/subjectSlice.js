@@ -8,9 +8,7 @@ export const fetchSubjects = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     console.log("Fetching subjects...");
     try {
-      const response = await api.get(
-        "http://localhost:3002/faculty/subject/getList"
-      );
+      const response = await api.get("/faculty/subject/getList");
       console.log("Subjects fetched:", response.data);
       return response.data;
     } catch (err) {
@@ -21,7 +19,7 @@ export const fetchSubjects = createAsyncThunk(
   }
 );
 
-// Thunk 2 ==> Fetch subjects by semester 
+// Thunk 2 ==> Fetch subjects by semester
 export const fetchSubjectsBySemester = createAsyncThunk(
   "subjects/fetchBySemester",
   async ({ semester, department }, { rejectWithValue }) => {
@@ -44,9 +42,7 @@ export const fetchSubjecDetails = createAsyncThunk(
   "subjects/fetchSubjectDetails",
   async (subjectId, { rejectWithValue }) => {
     try {
-      const response = await api.get(
-        `http://localhost:3002/faculty/subject/getList/${subjectId}`
-      );
+      const response = await api.get(`/faculty/subject/getList/${subjectId}`);
       return response.data;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load subject";
@@ -60,10 +56,7 @@ export const createSubject = createAsyncThunk(
   "subjects/createSubject",
   async (subjectData, { rejectWithValue }) => {
     try {
-      const response = await api.post(
-        "http://localhost:3002/faculty/subject/create",
-        subjectData
-      );
+      const response = await api.post("/faculty/subject/create", subjectData);
       return response.data;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to create subject";
@@ -78,7 +71,7 @@ export const updateSubject = createAsyncThunk(
   async ({ id, subjectData }, { rejectWithValue }) => {
     try {
       const response = await api.put(
-        `http://localhost:3002/faculty/subject/update/${id}`,
+        `/faculty/subject/update/${id}`,
         subjectData
       );
       return response.data;
@@ -94,9 +87,7 @@ export const deleteSubject = createAsyncThunk(
   "subjects/deleteSubject",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.delete(
-        `http://localhost:3002/faculty/subject/delete/${id}`
-      );
+      const response = await api.delete(`/faculty/subject/delete/${id}`);
       return response.data;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to delete subject";
@@ -145,12 +136,13 @@ const subjectSlice = createSlice({
       })
       .addCase(fetchSubjectsBySemester.fulfilled, (state, action) => {
         state.loading = false;
-        state.subjects = action.payload.map((subj) => ({ 
+        state.subjects = action.payload.map((subj) => ({
           subjectId: subj._id,
-          name: subj.name
-        })
+          name: subj.name,
+        }));
+        toast.success(
+          "Subjects for selected semester and department loaded successfully!"
         );
-        toast.success("Subjects for selected semester and department loaded successfully!");
       })
       .addCase(fetchSubjectsBySemester.rejected, (state, action) => {
         state.loading = false;

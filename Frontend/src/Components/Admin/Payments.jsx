@@ -1,23 +1,39 @@
 import { useState, useEffect } from "react";
-import { FaSave, FaSyncAlt, FaUser, FaDollarSign, FaBook, FaCheckCircle } from "react-icons/fa";
+import {
+  FaSave,
+  FaSyncAlt,
+  FaUser,
+  FaDollarSign,
+  FaBook,
+  FaCheckCircle,
+} from "react-icons/fa";
 import Select from "react-select";
 import AdminNavbar from "./AdminNavbar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminDesktopSidebar from "./AdminDesktopSidebar";
 import api from "../../utils/api";
-import axios from "axios";
 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSubjecDetails } from "../../store/subjectSlice";
 import toast from "react-hot-toast";
+import { createPayment } from "../../store/paymentSlice";
+import { fetchFaculties } from "../../store/facultySlice";
 
 function Payments() {
   const dispatch = useDispatch();
   // Fetch Selected Subject Details from Redux store
-  const { selectedSubjectDetails, loading: selectedSubjectDetailsLoading, error } = useSelector((state) => state.subjectSlice);
+  const {
+    selectedSubjectDetails,
+    loading: selectedSubjectDetailsLoading,
+    error,
+  } = useSelector((state) => state.subjectSlice);
+
+  const { facultyList, loading: fetchFacultiesLoading } = useSelector(
+    (state) => state.facultySlice
+  );
 
   const [showSidebar, setShowSidebar] = useState(false);
-  const [facultyList, setFacultyList] = useState([]);
+  // const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
   const [semesters, setSemesters] = useState([]);
@@ -45,24 +61,8 @@ function Payments() {
 
   // Fetch all faculty on component mount
   useEffect(() => {
-    fetchFacultyList();
+    dispatch(fetchFaculties());
   }, []);
-
-  // Fetch faculty list
-  const fetchFacultyList = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(
-        "http://localhost:3002/admin/faculty/getAll"
-      );
-      setFacultyList(response.data);
-    } catch (error) {
-      console.error("Error fetching faculty list:", error);
-      alert("Failed to fetch faculty list");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Handle faculty selection
   const handleFacultyChange = async (facultyId) => {
@@ -76,11 +76,11 @@ function Payments() {
         setLoading(true);
         // Fetch faculty data
         const facultyResponse = await api.get(
-          `http://localhost:3002/admin/payment/faculty/${facultyId}`
+          `/admin/payment/faculty/${facultyId}`
         );
         setFacultyData(facultyResponse.data);
         const semestersResponse = await api.get(
-          `http://localhost:3002/admin/payment/faculty/${facultyId}/semesters`
+          `/admin/payment/faculty/${facultyId}/semesters`
         );
         console.log(semestersResponse.data);
         setSemesters(semestersResponse.data);
@@ -108,8 +108,8 @@ function Payments() {
     if (sem && selectedFaculty) {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://localhost:3002/admin/payment/faculty/${selectedFaculty}/semester/${sem}/year/${academicYear}/semType/${semesterType}/subjects`
+        const response = await api.get(
+          `/admin/payment/faculty/${selectedFaculty}/semester/${sem}/year/${academicYear}/semType/${semesterType}/subjects`
         );
         console.log(response.data);
         setSubjects(response.data);
@@ -158,7 +158,10 @@ function Payments() {
     // }
 
     // Fetch subject details using Redux action
-    console.log("The selected subject from faculty assigned subjects is ==>", subjectObj);
+    console.log(
+      "The selected subject from faculty assigned subjects is ==>",
+      subjectObj
+    );
     dispatch(fetchSubjecDetails(subjectObj.subjectId));
   };
 
@@ -202,7 +205,8 @@ function Payments() {
       const semesterTotal = selectedSubjectDetails?.hasSemesterExam
         ? (parseInt(semesterPapers) || 0) * (parseInt(semesterRate) || 0)
         : 0;
-      const totalPayment = termTestTotal + termWorkTotal + oralTotal + semesterTotal;
+      const totalPayment =
+        termTestTotal + termWorkTotal + oralTotal + semesterTotal;
 
       setTotalPayment(totalPayment);
 
@@ -224,7 +228,12 @@ function Payments() {
         totalPayment: totalPayment,
       };
 
-      console.log( "Adding remuneration for subject:", selectedSubject, "with ID:", selectedSubjectObj.subjectId );
+      console.log(
+        "Adding remuneration for subject:",
+        selectedSubject,
+        "with ID:",
+        selectedSubjectObj.subjectId
+      );
 
       setCalculatedRemunerations((prev) => [...prev, calculatedRemuneration]);
 
@@ -239,7 +248,10 @@ function Payments() {
       setSemesterPapers("");
       setSemesterRate("");
 
-      toast.success( 'Subject added to calculation. Click "Update Final Calculation" to save to database.', { duration: 4000 });
+      toast.success(
+        'Subject added to calculation. Click "Update Final Calculation" to save to database.',
+        { duration: 4000 }
+      );
     } catch (error) {
       console.error("Error adding subject to calculation:", error);
       toast.error("Failed to add subject to calculation. Please try again.");
@@ -251,7 +263,9 @@ function Payments() {
   // Handle final calculation and save to database
   const handleUpdateFinalCalculation = async () => {
     if (calculatedRemunerations.length === 0) {
-      alert("Please add at least one subject remuneration before final calculation");
+      alert(
+        "Please add at least one subject remuneration before final calculation"
+      );
       return;
     }
 
@@ -268,13 +282,16 @@ function Payments() {
         .map((remuneration) => {
           // Use the stored subjectId directly if available
           if (remuneration.subjectId) {
-            console.log(`Using stored subjectId: ${remuneration.subjectId} for subject: ${remuneration.subjectName} of ${remuneration.department}`);
+            console.log(
+              `Using stored subjectId: ${remuneration.subjectId} for subject: ${remuneration.subjectName} of ${remuneration.department}`
+            );
             return {
               subjectId: remuneration.subjectId,
               subjectName: remuneration.subjectName, // ADDed
-              department: remuneration.department, // <-- NEW 
+              department: remuneration.department, // <-- NEW
               semester: remuneration.semester, // ADDed
-              termTestAssessment: {           // Added 
+              termTestAssessment: {
+                // Added
                 count: remuneration.termTestPapers,
                 rate: remuneration.termTestRate,
               },
@@ -296,39 +313,11 @@ function Payments() {
           // Fallback: Try to find by name if subjectId is not available
           let subjectObj = subjects.find(
             (subject) =>
-              subject.name.trim().toLowerCase() === remuneration.subjectName.trim().toLowerCase() &&
+              subject.name.trim().toLowerCase() ===
+                remuneration.subjectName.trim().toLowerCase() &&
               subject.department === remuneration.department &&
               subject.semester === remuneration.semester
           );
-          /* OLD 
-          let subjectObj = subjects.find(
-            (subject) => subject.name === remuneration.subjectName
-          ); 
-          */
-
-          // If not found, try case-insensitive match
-          /* 
-          if (!subjectObj) {
-            subjectObj = subjects.find(
-              (subject) =>
-                subject.name.toLowerCase() ===
-                remuneration.subjectName.toLowerCase()
-            );
-          } */
-
-          // If still not found, try partial match
-          /* 
-          if (!subjectObj) {
-            subjectObj = subjects.find(
-              (subject) =>
-                subject.name
-                  .toLowerCase()
-                  .includes(remuneration.subjectName.toLowerCase()) ||
-                remuneration.subjectName
-                  .toLowerCase()
-                  .includes(subject.name.toLowerCase())
-            );
-          } */
 
           if (!subjectObj) {
             console.error("Subject not found", {
@@ -338,21 +327,18 @@ function Payments() {
             });
             return null; // STOP
           }
-          /* OLD
-          if (!subjectObj) {
-            console.error("Subject not found for:", remuneration.subjectName);
-            console.log( "Available subjects:", subjects.map((s) => s.name) );
-            return null;
-          } */
 
-          console.log(`Matched "${remuneration.subjectName}" with "${subjectObj.name}" SubjectObj: "${subjectObj}"`);
+          console.log(
+            `Matched "${remuneration.subjectName}" with "${subjectObj.name}" SubjectObj: "${subjectObj}"`
+          );
 
           return {
             subjectId: subjectObj.subjectId,
             subjectName: remuneration.subjectName, // ADDed
-            department: remuneration.department, // <-- NEW 
+            department: remuneration.department, // <-- NEW
             semester: remuneration.semester,
-            termTestAssessment: {           // Added 
+            termTestAssessment: {
+              // Added
               count: remuneration.termTestPapers,
               rate: remuneration.termTestRate,
             },
@@ -379,7 +365,10 @@ function Payments() {
       );
 
       console.log("All calculated remunerations:", calculatedRemunerations);
-      console.log( "Available subjects:", subjects.map((s) => ({ name: s.name, subjectId: s.subjectId })));
+      console.log(
+        "Available subjects:",
+        subjects.map((s) => ({ name: s.name, subjectId: s.subjectId }))
+      );
       console.log("Subject breakdown being sent:", uniqueSubjectBreakdown);
 
       // Validate that we have subjects to send
@@ -396,32 +385,24 @@ function Payments() {
         subjectBreakdown: uniqueSubjectBreakdown,
       };
 
-      console.log("Sending final payment data:", paymentData);
-      const response = await axios.post(
-        "http://localhost:3002/admin/payment/create",
-        paymentData
-      );
-      console.log("Final calculation response:", response.data);
+      const result = await dispatch(createPayment(paymentData));
 
-      if (response.data) {
+      if (createPayment.fulfilled.match(result)) {
         toast.success("Payment calculation saved successfully!");
         // Clear the calculated remunerations after successful save
         setCalculatedRemunerations([]);
         // Reset form
         setSelectedSubject("");
-        setTermTestPapers("");
-        setTermTestRate("");
         setTermWorkPapers("");
         setTermWorkRate("");
         setOralPapers("");
         setOralRate("");
         setSemesterPapers("");
         setSemesterRate("");
+        // dispatch(fetchPayments());
+      } else {
+        toast.error(result.payload || "Failed to save Payment");
       }
-    } catch (error) {
-      console.error("Error saving final calculation:", error);
-      // toast.error("Failed to save final calculation. Please try again.");
-      toast.error(error.response.data.error)
     } finally {
       setLoading(false);
     }
@@ -470,7 +451,6 @@ function Payments() {
               <div className="p-6 space-y-6">
                 {/* Faculty, Semester, Academic Year */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Select Faculty
@@ -481,27 +461,33 @@ function Payments() {
                         value: faculty._id, // SAME as old <option value>
                         label: `${faculty.name} - ${faculty.designation}`,
                       }))}
-                    
                       value={
                         selectedFaculty
                           ? {
                               value: selectedFaculty,
-                              label: facultyList.find((f) => f._id === selectedFaculty)
-                                ? `${facultyList.find((f) => f._id === selectedFaculty).name} - ${
-                                    facultyList.find((f) => f._id === selectedFaculty).designation
+                              label: facultyList.find(
+                                (f) => f._id === selectedFaculty
+                              )
+                                ? `${
+                                    facultyList.find(
+                                      (f) => f._id === selectedFaculty
+                                    ).name
+                                  } - ${
+                                    facultyList.find(
+                                      (f) => f._id === selectedFaculty
+                                    ).designation
                                   }`
                                 : "",
                             }
                           : null
                       }
-                    
-                      onChange={(selected) => handleFacultyChange(selected ? selected.value : "")}
-                    
+                      onChange={(selected) =>
+                        handleFacultyChange(selected ? selected.value : "")
+                      }
                       isDisabled={loading}
                       placeholder="Choose..."
                       className="basic-select"
                       classNamePrefix="select"
-
                       menuPortalTarget={document.body}
                       menuPosition="fixed"
                       styles={{
@@ -519,7 +505,7 @@ function Payments() {
                         }),
                         menuPortal: (base) => ({
                           ...base,
-                          zIndex: 9999, 
+                          zIndex: 9999,
                         }),
                       }}
                     />
@@ -535,7 +521,6 @@ function Payments() {
                         value: JSON.stringify(semester), // SAME as old value
                         label: semester.label,
                       }))}
-                    
                       value={
                         selectedSemester
                           ? {
@@ -544,16 +529,13 @@ function Payments() {
                             }
                           : null
                       }
-                    
                       onChange={(selected) =>
                         handleSemesterChange(selected ? selected.value : "")
                       }
-                    
                       isDisabled={!selectedFaculty || loading}
                       placeholder="Choose..."
                       className="basic-select"
                       classNamePrefix="select"
-                    
                       styles={{
                         control: (provided) => ({
                           ...provided,
@@ -604,15 +586,12 @@ function Payments() {
                           key={index}
                           className="inline-flex flex-col gap-1 px-3 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
                         >
-                          <span className="leading-tight">
-                            {subject.name}
-                          </span>
-                                              
+                          <span className="leading-tight">{subject.name}</span>
+
                           <span className="w-fit px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-200 text-blue-900">
                             {subject.department}
                           </span>
                         </span>
-
                       ))
                     )}
                   </div>
@@ -674,8 +653,8 @@ function Payments() {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"}{" "} 
-                        Term Test
+                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"} Term
+                        Test
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -684,8 +663,8 @@ function Payments() {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {selectedSubjectDetails.hasTermWork ? "✓" : "✗"}{" "} 
-                        Term Work
+                        {selectedSubjectDetails.hasTermWork ? "✓" : "✗"} Term
+                        Work
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -718,13 +697,12 @@ function Payments() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Select Subject
                   </label>
-                                
+
                   <Select
                     options={subjects.map((subject) => ({
-                      value: subject, 
+                      value: subject,
                       label: `${subject.name} - ${subject.department}`,
                     }))}
-                  
                     value={
                       selectedSubject
                         ? {
@@ -733,17 +711,14 @@ function Payments() {
                           }
                         : null
                     }
-                  
                     onChange={(selected) =>
                       handleSubjectChange(selected ? selected.value : "")
                     }
-                  
                     isDisabled={!selectedSemester || subjects.length === 0}
                     placeholder="Choose..."
                     className="basic-select"
                     classNamePrefix="select"
                     isSearchable={false}
-                  
                     menuPortalTarget={document.body}
                     menuPosition="fixed"
                     styles={{
@@ -760,46 +735,46 @@ function Payments() {
                         },
                       }),
                       menuPortal: (base) => ({
-                          ...base,
-                          zIndex: 9999, 
+                        ...base,
+                        zIndex: 9999,
                       }),
                     }}
                   />
                 </div>
 
                 {/* Term Test Assessment */}
-               {selectedSubjectDetails?.hasTermTest &&
-                 facultyData?.designation !== "External Examiner" && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                         No. of Term Test Papers
-                       </label>
-                       <input
-                         type="number"
-                         value={termTestPapers}
-                         onChange={(e) => setTermTestPapers(e.target.value)}
-                         className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-                       />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                         Rate per Paper
-                       </label>
-                       <div className="relative">
-                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                           ₹
-                         </span>
-                         <input
-                           type="number"
-                           value={termTestRate}
-                           onChange={(e) => setTermTestRate(e.target.value)}
-                           className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-                         />
-                       </div>
-                     </div>
-                   </div>
-                )}
+                {selectedSubjectDetails?.hasTermTest &&
+                  facultyData?.designation !== "External Examiner" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          No. of Term Test Papers
+                        </label>
+                        <input
+                          type="number"
+                          value={termTestPapers}
+                          onChange={(e) => setTermTestPapers(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rate per Paper
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            value={termTestRate}
+                            onChange={(e) => setTermTestRate(e.target.value)}
+                            className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Term Work Assessment */}
                 {selectedSubjectDetails?.hasTermTest &&

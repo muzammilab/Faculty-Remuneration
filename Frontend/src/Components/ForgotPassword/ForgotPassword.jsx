@@ -1,48 +1,44 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
-function ForgotPassword() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const queryParams = new URLSearchParams(location.search);
-  const role = queryParams.get("role") || "faculty";
-  
+export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [role, setRole] = useState("faculty");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const sendOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
-    
     try {
-      const res = await axios.post("http://localhost:3002/forgot-password", {
+      await api.post("/forgot-password", {
         email,
         role,
       });
-      setMessage(res.data.message || "Reset link sent to your email");
-      toast.success("Reset link sent successfully! ✅");
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Something went wrong";
-      setMessage("Error: " + errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
+      localStorage.setItem("resetEmail", email);
+      localStorage.setItem("resetRole", role);
+      toast.success("OTP sent to your email");
+      navigate("/verify-otp");
+    } catch {
+      toast.error("User not found");
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative"
-         style={{
-           background: "linear-gradient(135deg, rgba(13, 110, 253, 0.5), rgba(13, 110, 253, 0.25)), url('/college-banner.jpg')",
-           backgroundSize: "cover",
-           backgroundPosition: "center",
-           backgroundAttachment: "fixed"
-         }}
+    <div
+      className="min-h-screen flex items-center justify-center p-6 relative"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(13, 110, 253, 0.5), rgba(13, 110, 253, 0.25)), url('/college-banner.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
     >
       {/* Floating decorative circles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -60,29 +56,51 @@ function ForgotPassword() {
         />
       </div>
 
-      {/* Main Card - EXACT FacultyPay design */}
+      {/* Main Card */}
       <motion.div
-        className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-8 w-full max-w-sm relative z-10 mx-auto"
+        className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-8 w-full max-w-sm relative z-10"
         style={{ maxWidth: "420px" }}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, type: "spring", stiffness: 80 }}
       >
-        {/* Header */}
+        {/* Header with RCOE Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="/rcoe-logo.jpg" 
-            alt="RCOE Logo" 
+          <img
+            src="/rcoe-logo.jpg"
+            alt="RCOE Logo"
             className="w-16 h-16 mx-auto mb-4 rounded-xl shadow-lg object-cover border-2 border-gray-200"
           />
           <h3 className="text-2xl font-bold text-blue-600 mb-1 tracking-tight">
-            Reset Password ({role.charAt(0).toUpperCase() + role.slice(1)})
+            Reset Password
           </h3>
-          <p className="text-gray-600 text-sm">Enter your email to receive reset instructions</p>
+          <p className="text-gray-600 text-sm">
+            Enter your email to receive OTP
+          </p>
+        </div>
+
+        {/* Role Tabs */}
+        <div className="flex justify-center mb-8">
+          {["admin", "faculty"].map((r) => (
+            <motion.button
+              key={r}
+              type="button"
+              className={`px-6 py-3 rounded-3xl font-bold text-sm transition-all duration-300 mx-1 flex-1 sm:flex-none cursor-pointer ${
+                role === r
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
+                  : "bg-gray-200/70 text-gray-700 hover:bg-gray-300 hover:shadow-md"
+              }`}
+              onClick={() => setRole(r)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {r.charAt(0).toUpperCase() + r.slice(1)}
+            </motion.button>
+          ))}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={sendOTP} className="space-y-4">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -91,7 +109,7 @@ function ForgotPassword() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email Address
             </label>
-            <input
+            <motion.input
               type="email"
               className="w-full px-4 py-4 bg-white border-2 border-gray-300/50 rounded-3xl shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300 text-base placeholder-gray-500 backdrop-blur-sm hover:border-gray-400"
               placeholder="Enter your registered email"
@@ -99,6 +117,7 @@ function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              whileFocus={{ scale: 1.02 }}
             />
           </motion.div>
 
@@ -113,31 +132,28 @@ function ForgotPassword() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Sending...
               </span>
             ) : (
-              "Send Reset Link"
+              "Send OTP"
             )}
           </motion.button>
         </form>
-
-        {/* Message */}
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mt-6 p-4 rounded-2xl text-sm font-medium text-center transition-all ${
-              message.startsWith("Error:")
-                ? "bg-red-50 border-2 border-red-200 text-red-800"
-                : "bg-emerald-50 border-2 border-emerald-200 text-emerald-800"
-            }`}
-          >
-            {message}
-          </motion.div>
-        )}
 
         {/* Back to Login */}
         <div className="mt-6 text-center">
@@ -160,5 +176,3 @@ function ForgotPassword() {
     </div>
   );
 }
-
-export default ForgotPassword;

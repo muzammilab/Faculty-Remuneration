@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaUser, FaMoneyBillWave, FaSignOutAlt } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 
 function FacultySidebar() {
   const menuItems = [
@@ -31,8 +31,8 @@ function FacultySidebar() {
 
     const fetchFacultyData = async () => {
       try {
-        const facultyRes = await axios.get(
-          `http://localhost:3002/admin/faculty/getSingle/${facultyId}`
+        const facultyRes = await api.get(
+          `/admin/faculty/getSingle/${facultyId}`
         );
         console.log("Getting Faculty Details For Faculty Sidebar");
         console.log(facultyRes.data);
@@ -104,9 +104,10 @@ function FacultySidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded no-underline transition-all duration-200
                  hover:scale-[1.02] hover:no-underline
-                 ${isActive
-                   ? "bg-blue-600 text-white shadow-sm scale-[1.02] transition-all duration-300"
-                   : "text-gray-900 hover:bg-gray-100"
+                 ${
+                   isActive
+                     ? "bg-blue-600 text-white shadow-sm scale-[1.02] transition-all duration-300"
+                     : "text-gray-900 hover:bg-gray-100"
                  }`
               }
             >

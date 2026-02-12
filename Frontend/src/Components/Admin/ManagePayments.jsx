@@ -1,77 +1,55 @@
 import { useState, useEffect } from "react";
-import { FaEdit, FaFileInvoiceDollar, FaSearch, FaTimes, FaDollarSign } from "react-icons/fa";
+import {
+  FaEdit,
+  FaFileInvoiceDollar,
+  FaSearch,
+  FaTimes,
+  FaDollarSign,
+} from "react-icons/fa";
 import AdminNavbar from "./AdminNavbar";
 import AdminDesktopSidebar from "./AdminDesktopSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
-import axios from "axios";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPayments, makePaymentPaid } from "../../store/paymentSlice";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 function ManagePayments() {
+  const dispatch = useDispatch();
+
   const [showSidebar, setShowSidebar] = useState(false);
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  // const [facultyList, setFacultyList] = useState([]);
-  // const [semesters] = useState([1, 2, 3, 4, 5, 6, 7, 8]);
 
   const handleSidebarOpen = () => setShowSidebar(true);
   const handleSidebarClose = () => setShowSidebar(false);
 
+  const { payments, loading } = useSelector((state) => state.paymentSlice);
+
   useEffect(() => {
-    fetchPayments();
-    // fetchFacultyList();
+    dispatch(fetchPayments());
   }, []);
 
-  // const fetchFacultyList = async () => {
-  //   try {
-  //     const response = await api.get("http://localhost:3002/admin/faculty/getAll");
-  //     console.log("Fetched faculty list:", response.data);
-  //     setFacultyList(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching faculty list:", error);
-  //   }
-  // };
-
-  const fetchPayments = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("http://localhost:3002/admin/payment/getAll");
-      console.log("Fetched payments:", response.data);
-      setPayments(response.data);
-    } catch (error) {
-      console.error("Error fetching payments:", error);
-      toast.error("Failed to fetch payment records");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePay = async (paymentId) => {
-    console.log(paymentId);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await axios.post(
-        `http://localhost:3002/make-payment/${paymentId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log(response.data);
+    const result = await dispatch(makePaymentPaid(paymentId));
+    if (makePaymentPaid.fulfilled.match(result)) {
       toast.success("Payment marked as paid!");
-      fetchPayments();
-    } catch (error) {
-      console.error("Error marking payment as paid:", error);
-      toast.error("Failed to mark payment as paid.");
+      // dispatch(fetchPayments());
+    } else {
+      toast.error(result.payload || "Failed to mark payment as paid.");
     }
   };
 
-  const handleSlip = async (paymentId, facultyName, academicYear, semesterType) => {
+  const handleSlip = async (
+    paymentId,
+    facultyName,
+    academicYear,
+    semesterType
+  ) => {
     console.log("Payment ID : ", paymentId);
 
     try {
-      const url = `http://localhost:3002/payment/generate-pdf/${paymentId}`;
+      const url = `${API_BASE}/payment/generate-pdf/${paymentId}`;
       const response = await fetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/pdf" },
@@ -79,7 +57,8 @@ function ManagePayments() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || "Failed to generate slip. Try again later.";
+        const errorMessage =
+          errorData.message || "Failed to generate slip. Try again later.";
         toast.error(errorMessage);
         throw new Error(errorMessage);
       }
@@ -103,15 +82,20 @@ function ManagePayments() {
     return date.toLocaleDateString("en-IN");
   };
 
-  const filteredPayments = payments.filter((payment) =>
-    payment.facultyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.academicYear?.toString()?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.semesterType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.totalAmount?.toString().includes(searchTerm) ||
-    formatDate(payment.createdAt)?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPayments = payments.filter(
+    (payment) =>
+      payment.facultyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.academicYear
+        ?.toString()
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      payment.semesterType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.totalAmount?.toString().includes(searchTerm) ||
+      formatDate(payment.createdAt)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
-
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -119,10 +103,14 @@ function ManagePayments() {
       unpaid: "bg-amber-100 text-amber-800 border-amber-200",
       failed: "bg-red-100 text-red-800 border-red-200",
     };
-    const config = statusConfig[status?.toLowerCase()] || "bg-gray-100 text-gray-800 border-gray-200";
-    
+    const config =
+      statusConfig[status?.toLowerCase()] ||
+      "bg-gray-100 text-gray-800 border-gray-200";
+
     return (
-      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${config}`}>
+      <span
+        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${config}`}
+      >
         {status?.toUpperCase() || "UNDEFINED"}
       </span>
     );
@@ -132,7 +120,10 @@ function ManagePayments() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
+        <AdminMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
+        />
 
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
@@ -146,7 +137,6 @@ function ManagePayments() {
           />
 
           <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-            
             {/* Search Bar */}
             <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
               <div className="p-4">
@@ -178,15 +168,19 @@ function ManagePayments() {
                     Payment Records
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    {loading ? "Loading..." : `${filteredPayments.length} payment record(s) found`}
+                    {loading.list
+                      ? "Loading..."
+                      : `${filteredPayments.length} payment record(s) found`}
                   </p>
                 </div>
               </div>
 
-              {loading ? (
+              {loading.list ? (
                 <div className="px-6 py-20 text-center">
                   <div className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="mt-4 text-sm text-gray-500">Loading payment records...</p>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading payment records...
+                  </p>
                 </div>
               ) : filteredPayments.length === 0 ? (
                 <div className="px-6 py-20 text-center">
@@ -230,9 +224,14 @@ function ManagePayments() {
                     </thead>
                     <tbody className="bg-white/60 divide-y divide-gray-100">
                       {filteredPayments.map((payment, index) => (
-                        <tr key={payment._id || index} className="hover:bg-blue-50/60 transition-colors">
+                        <tr
+                          key={payment._id || index}
+                          className="hover:bg-blue-50/60 transition-colors"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="font-semibold text-gray-900">{payment.facultyName}</span>
+                            <span className="font-semibold text-gray-900">
+                              {payment.facultyName}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -246,7 +245,9 @@ function ManagePayments() {
                             {formatDate(payment.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
-                            {payment.status === "paid" ? formatDate(payment.paidAt) : "---"}
+                            {payment.status === "paid"
+                              ? formatDate(payment.paidAt)
+                              : "---"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className="font-bold text-emerald-600">
@@ -279,7 +280,8 @@ function ManagePayments() {
                                 onClick={() =>
                                   handleSlip(
                                     payment._id,
-                                    payment.facultyId?.name || payment.facultyName,
+                                    payment.facultyId?.name ||
+                                      payment.facultyName,
                                     payment.academicYear,
                                     payment.semesterType
                                   )

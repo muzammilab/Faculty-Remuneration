@@ -271,6 +271,7 @@ const facultySlice = createSlice({
         toast.error(action.payload);
       })
 
+      
       // ******** Thunk 5 ******** Used in Pages ==> [1] FacultyDetails.jsx ✅ [2] UpdateAssignment.jsx (No Loading Required)
       .addCase(fetchFacultyById.pending, (state) => {
         state.loading.fetchFacultyByIdLoading = true;

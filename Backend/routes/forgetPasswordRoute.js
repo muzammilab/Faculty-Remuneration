@@ -7,7 +7,7 @@ forgetPasswordRouter.post(
   forgetPasswordController.forgotPassword
 );
 forgetPasswordRouter.post(
-  "/reset-password/:token",
+  "/reset-password/",
   forgetPasswordController.resetPassword
 );
 

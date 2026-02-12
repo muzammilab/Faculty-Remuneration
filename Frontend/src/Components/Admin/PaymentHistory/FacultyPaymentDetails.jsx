@@ -1,48 +1,38 @@
 import { useEffect, useState } from "react";
-import { FaPrint, FaFileExport, FaArrowLeft, FaUser, FaCalendar, FaDollarSign, FaCalculator } from "react-icons/fa";
+import {
+  FaPrint,
+  FaFileExport,
+  FaArrowLeft,
+  FaUser,
+  FaCalendar,
+  FaDollarSign,
+  FaCalculator,
+} from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFacultyPaymentDetails } from "../../../store/paymentSlice";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 function FacultyPaymentDetails() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id, academicYear, semesterType } = useParams();
 
-  const [remuneration, setRemuneration] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { facultyPaymentDetails, loading } = useSelector(
+    (state) => state.paymentSlice
+  );
+
+  const isLoading = loading.paymentDetailList;
+  const remuneration = facultyPaymentDetails;
 
   const handleGoBack = () => navigate("/admin/paymenthistory");
 
   useEffect(() => {
-    const fetchFacultyPaymentDetails = async () => {
-      try {
-        setLoading(true);
-        const paymentRes = await axios.get(
-          `http://localhost:3002/admin/payment/getSinglePayment/${id}/${academicYear}`
-        );
-        console.log("Getting Payments for Faculty Payment Details Page ");
-        console.log(paymentRes.data);
-
-        const selectedPayment = paymentRes.data.payments.find(
-          (p) => p.semesterType.toLowerCase() === semesterType.toLowerCase()
-        );
-
-        if (selectedPayment) {
-          setRemuneration({
-            ...paymentRes.data,
-            payment: selectedPayment,
-            breakdown: selectedPayment.subjectBreakdown,
-          });
-        }
-      } catch (err) {
-        console.error("❌ Error fetching remuneration:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFacultyPaymentDetails();
-  }, [id, academicYear, semesterType]);
+    dispatch(
+      fetchFacultyPaymentDetails({ facultyId: id, academicYear, semesterType })
+    );
+  }, [dispatch, id, academicYear, semesterType]);
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -65,13 +55,12 @@ function FacultyPaymentDetails() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
-
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center min-h-full">
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
@@ -80,7 +69,7 @@ function FacultyPaymentDetails() {
                 </p>
               </div>
             </div>
-          ) : !remuneration.payment ? (
+          ) : !remuneration?.payment ? (
             <div className="flex items-center justify-center min-h-full">
               <div className="text-center p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -125,7 +114,7 @@ function FacultyPaymentDetails() {
                       const paymentId = remuneration?.payment?._id;
                       if (paymentId) {
                         window.open(
-                          `http://localhost:3002/payment/generate-pdf/${paymentId}`,
+                          `${API_BASE}/payment/generate-pdf/${paymentId}`,
                           "_blank"
                         );
                       }

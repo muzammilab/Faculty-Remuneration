@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Container, Form, Row, Col, Button, Alert, Card } from "react-bootstrap";
-import { FaArrowLeft, FaUserPlus, FaUserTie, FaBookOpen, FaEnvelope, FaPhone } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaArrowLeft, FaUserPlus, FaUserTie, FaEnvelope, FaPhone } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
-import api from "../../../utils/api";
 import Select from "react-select";
+import toast from "react-hot-toast";
+import api from "../../../utils/api";
+import AdminDesktopSidebar from "../AdminDesktopSidebar";
 
 function EditFaculty() {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get faculty ID from URL parameters
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,206 +19,113 @@ function EditFaculty() {
     phone: "",
     baseSalary: "",
     travelAllowance: "",
-    semester: "",
-    subject: "",
   });
 
-  const [assignedSubjects, setAssignedSubjects] = useState([]); // [{ semester, subject }]
-
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  const [subjectOptions, setSubjectOptions] = useState([]);
-
   const departments = [
-    "Computer",
-    "AIDS",
-    "ECS",
-    "Mechanical",
-    "Electrical",
-    "Civil",    
+    "Computer Engineering",
+    "AIDS Engineering",
+    "ECS Engineering",
+    "Mechanical Engineering",
+    "Civil Engineering",
   ];
+
   const designations = [
+    "HoD",
     "Professor",
     "Associate Professor",
     "Assistant Professor",
-    "HoD",
     "External Examiner",
   ];
-  const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-  // Fetch faculty data when component mounts
   useEffect(() => {
-    const fetchFacultyData = async () => {
-      if (!id) {
-        setError("Faculty ID not found");
-        setFetching(false);
-        return;
-      }
-
+    const fetchFaculty = async () => {
       try {
         setFetching(true);
-        const response = await api.get(`/admin/faculty/getSingle/${id}`);
-        const faculty = response.data;
 
-        console.log("Fetched faculty data:", faculty);
+        const res = await api.get(`/admin/faculty/getSingle/${id}`);
+        const faculty = res.data;
 
-        // Populate form with existing faculty data
         setFormData({
           name: faculty.name || "",
           department: faculty.department || "",
           designation: faculty.designation || "",
           email: faculty.email || "",
-          password: "", // Don't populate password for security
+          password: "",
           phone: faculty.phone || "",
           baseSalary: faculty.baseSalary || "",
           travelAllowance: faculty.travelAllowance || "",
-          semester: "",
-          subject: "",
         });
-
-        // Populate assigned subjects
-        /* if (faculty.assignedSubjects && faculty.assignedSubjects.length > 0) {
-          // Flatten assignedSubjects
-          const flatSubjects = [];
-          faculty.assignedSubjects?.forEach((ay) => {
-            ay.semesters.forEach((sem) => {
-              sem.subjects.forEach((subject) => {
-                flatSubjects.push({
-                  academicYear: ay.academicYear,
-                  semesterType: sem.semesterType,
-                  semester: subject.semester,
-                  subjectId: subject.subjectId,
-                  name: subject.name,
-                });
-              });
-            });
-          });
-
-          setAssignedSubjects(flatSubjects);
-        } */
 
         setError("");
       } catch (err) {
-        console.error("Failed to fetch faculty data:", err);
-        setError("Failed to load faculty data. Please try again.");
+        console.error(err);
+
         if (err.response?.status === 401) {
-          alert("Authentication failed. Please login again.");
+          toast.error("Authentication failed. Please login again.");
           navigate("/login");
+        } else {
+          setError("Failed to load faculty data.");
         }
       } finally {
         setFetching(false);
       }
     };
 
-    fetchFacultyData();
+    fetchFaculty();
   }, [id, navigate]);
-
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      console.log("Fetching subjects for semester:", formData.semester);
-      if (formData.semester && formData.semester !== "Select") {
-        try {
-          const res = await api.get(
-            `/faculty/subject/getList?semester=${formData.semester}`
-          );
-          console.log(res.data);
-          const subjectNames = res.data.map((subj) => subj.name); // assuming Subject has a 'name'
-          setSubjectOptions(subjectNames);
-        } catch (err) {
-          console.error("Failed to fetch subjects:", err);
-          if (err.response?.status === 401) {
-            alert("Authentication failed. Please login again.");
-            navigate("/login");
-          }
-        }
-      } else {
-        setSubjectOptions([]); // clear when no semester selected
-      }
-    };
-
-    fetchSubjects();
-  }, [formData.semester, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
-  const handleAddAssignment = (e) => {
-    e.preventDefault();
-    if (
-      formData.semester &&
-      formData.subject &&
-      formData.semester !== "Select" &&
-      formData.subject !== "Select"
-    ) {
-      // Prevent duplicate assignments
-      const exists = assignedSubjects.some(
-        (a) =>
-          a.semester === formData.semester && a.subject === formData.subject
-      );
-      if (!exists) {
-        setAssignedSubjects((prev) => [
-          ...prev,
-          { semester: formData.semester, subject: formData.subject },
-        ]);
-      }
-      // Clear subject selection field after adding
-      setFormData((prev) => ({ ...prev, subject: "", semester: "" }));
-    }
-  };
-
-  const handleRemoveAssignment = (index) => {
-    setAssignedSubjects((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
     try {
-      // Format the data according to backend expectations
-      const facultyData = {
+      setLoading(true);
+      setError("");
+
+      const payload = {
         name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
         department: formData.department,
         designation: formData.designation,
+        email: formData.email,
+        phone: formData.phone,
         baseSalary: Number(formData.baseSalary),
         travelAllowance: Number(formData.travelAllowance),
-        /* subjects: assignedSubjects.map((subject) => ({
-          name: subject.subject,
-          semester: Number(subject.semester),
-        })), */
       };
 
-      // Only include password if it's been changed
-      if (formData.password) {
-        facultyData.password = formData.password;
+      if (formData.password.trim()) {
+        payload.password = formData.password;
       }
 
-      const response = await api.put(`/admin/faculty/edit/${id}`, facultyData);
+      await api.put(`/admin/faculty/edit/${id}`, payload);
 
-      console.log("Faculty updated successfully:", response.data);
       setSuccess(true);
 
       setTimeout(() => {
-        setSuccess(false);
         navigate("/admin/facultymanager");
       }, 2000);
     } catch (err) {
-      console.error("Error updating faculty:", err);
+      console.error(err);
+
       if (err.response?.status === 401) {
-        alert("Authentication failed. Please login again.");
-        navigate("/");
+        toast.error("Authentication failed.");
+        navigate("/login");
       } else {
         setError(
           err.response?.data?.error ||
-            "Failed to update faculty. Please try again."
+            "Failed to update faculty. Please try again.",
         );
       }
     } finally {
@@ -229,336 +137,309 @@ function EditFaculty() {
     navigate("/admin/facultymanager");
   };
 
-  if (fetching) {
-    return (
-      <Container fluid className="p-4 bg-light min-vh-100">
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ minHeight: "60vh" }}
-        >
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar */}
+        <AdminDesktopSidebar />
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleGoBack}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+                >
+                  <FaArrowLeft size={15} />
+                  Back
+                </button>
+
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                    Edit Faculty Member
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    Update faculty information and remuneration
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="mt-3 text-muted">Loading faculty data...</p>
+
+            {/* Card */}
+            <div className="max-w-full mx-auto mt-5">
+              <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm p-8">
+                {fetching ? (
+                  <div className="py-20 flex justify-center items-center">
+                    <div className="text-center">
+                      <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="mt-4 text-gray-500 font-medium">
+                        Loading faculty details...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* LEFT SIDE */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-6">
+                          <FaUserTie className="text-blue-600" size={20} />
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            Faculty Details
+                          </h3>
+                        </div>
+
+                        <div className="space-y-6">
+                          {/* Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Name
+                            </label>
+
+                            <input
+                              name="name"
+                              value={formData.name}
+                              onChange={handleChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter faculty name"
+                              required
+                            />
+                          </div>
+
+                          {/* Department */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Department
+                            </label>
+
+                            <Select
+                              options={departments.map((dep) => ({
+                                value: dep,
+                                label: dep,
+                              }))}
+                              value={
+                                formData.department
+                                  ? {
+                                      value: formData.department,
+                                      label: formData.department,
+                                    }
+                                  : null
+                              }
+                              onChange={(selected) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  department: selected?.value || "",
+                                }))
+                              }
+                              placeholder="Select Department"
+                              classNamePrefix="select"
+                            />
+                          </div>
+
+                          {/* Designation */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Designation
+                            </label>
+
+                            <Select
+                              options={designations.map((des) => ({
+                                value: des,
+                                label: des,
+                              }))}
+                              value={
+                                formData.designation
+                                  ? {
+                                      value: formData.designation,
+                                      label: formData.designation,
+                                    }
+                                  : null
+                              }
+                              onChange={(selected) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  designation: selected?.value || "",
+                                }))
+                              }
+                              placeholder="Select Designation"
+                              classNamePrefix="select"
+                            />
+                          </div>
+
+                          {/* Salary Section */}
+                          <div>
+                            <div className="flex items-center gap-3 mb-4">
+                              <FaUserPlus
+                                className="text-emerald-600"
+                                size={18}
+                              />
+                              <h4 className="text-lg font-semibold text-gray-900">
+                                Remuneration Details
+                              </h4>
+                            </div>
+
+                            <div className="space-y-4">
+                              {/* Base Salary */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Base Salary
+                                </label>
+
+                                <input
+                                  type="number"
+                                  min="0"
+                                  name="baseSalary"
+                                  value={formData.baseSalary}
+                                  onChange={handleChange}
+                                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
+                                  placeholder="Enter base salary"
+                                  required
+                                />
+                              </div>
+
+                              {/* Travel */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Travel Allowance
+                                </label>
+
+                                <input
+                                  type="number"
+                                  min="0"
+                                  name="travelAllowance"
+                                  value={formData.travelAllowance}
+                                  onChange={handleChange}
+                                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
+                                  placeholder="Enter travel allowance"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RIGHT SIDE */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-6">
+                          <FaEnvelope className="text-blue-600" size={20} />
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            Contact Details
+                          </h3>
+                        </div>
+
+                        <div className="space-y-6">
+                          {/* Email */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Email
+                            </label>
+
+                            <input
+                              type="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter email"
+                              required
+                            />
+                          </div>
+
+                          {/* Password */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Password (Leave blank to keep current password)
+                            </label>
+
+                            <input
+                              type="password"
+                              name="password"
+                              value={formData.password}
+                              onChange={handleChange}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter new password"
+                            />
+                          </div>
+
+                          {/* Phone */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Phone Number
+                            </label>
+
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">
+                                +91
+                              </div>
+
+                              <input
+                                type="tel"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value.length <= 10) {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      phone: value.replace(/\D/g, ""),
+                                    }));
+                                  }
+                                }}
+                                className="w-full pl-16 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter 10 digit phone"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    {error && (
+                      <div className="bg-red-50 border border-red-200 text-red-800 rounded-2xl px-6 py-4 text-sm font-medium">
+                        {error}
+                      </div>
+                    )}
+
+                    {success && (
+                      <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-6 py-4 text-sm font-medium">
+                        Faculty updated successfully! Redirecting...
+                      </div>
+                    )}
+
+                    {/* Submit */}
+                    <div className="flex justify-end pt-4 border-t border-gray-200">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                      >
+                        {loading ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <FaUserPlus size={18} />
+                            Update Faculty
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </Container>
-    );
-  }
-
-  return (
-    <Container fluid className="p-4 bg-light min-vh-100">
-      {/* Header (Back Button + Heading) */}
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <Button
-          variant="outline-secondary"
-          className="d-flex align-items-center gap-2"
-          onClick={handleGoBack}
-        >
-          <FaArrowLeft /> Back
-        </Button>
-        <h2 className="fw-bold mb-0">Edit Faculty Member</h2>
       </div>
-
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="danger" className="mb-4">
-          {error}
-        </Alert>
-      )}
-
-      {/* Card that contains Form */}
-      <Card
-        className="shadow rounded-4 border-0 p-4 bg-white mx-auto"
-        style={{ maxWidth: 900 }}
-      >
-        <Form onSubmit={handleSubmit}>
-          <Row>
-            {/* First Part Of Form i.e Faculty Details */}
-            <Col md={6}>
-              <div className="d-flex align-items-center gap-2 mb-3">
-                <FaUserTie className="text-primary" />
-                <h5 className="fw-bold mb-0">Faculty Details</h5>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Name</Form.Label>
-                <Form.Control
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Enter faculty name"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Department</Form.Label>
-                <Select
-                  options={departments.map((dep) => ({
-                    value: dep,
-                    label: dep,
-                  }))}
-                  value={
-                    formData.department
-                      ? {
-                          value: formData.department,
-                          label: formData.department,
-                        }
-                      : null
-                  }
-                  onChange={(selected) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      department: selected ? selected.value : "",
-                    }))
-                  }
-                  placeholder="Select Department"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Designation</Form.Label>
-                <Select
-                  options={designations.map((des) => ({
-                    value: des,
-                    label: des,
-                  }))}
-                  value={
-                    formData.designation
-                      ? {
-                          value: formData.designation,
-                          label: formData.designation,
-                        }
-                      : null
-                  }
-                  onChange={(selected) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      designation: selected ? selected.value : "",
-                    }))
-                  }
-                  placeholder="Select Designation"
-                  required
-                />
-              </Form.Group>
-
-              {/* Remuneration Details Section */}
-              <div className="d-flex align-items-center gap-2 mb-3 mt-4">
-                <FaUserPlus className="text-success" />
-                <h5 className="fw-bold mb-0">Remuneration Details</h5>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Base Salary</Form.Label>
-                <Form.Control
-                  name="baseSalary"
-                  value={formData.baseSalary}
-                  onChange={handleChange}
-                  placeholder="Enter base salary"
-                  type="number"
-                  min="0"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Travel Allowance</Form.Label>
-                <Form.Control
-                  name="travelAllowance"
-                  value={formData.travelAllowance}
-                  onChange={handleChange}
-                  placeholder="Enter travel allowance"
-                  type="number"
-                  min="0"
-                  required
-                />
-              </Form.Group>
-            </Col>
-
-            {/* Second Part Of Form i.e Contact & Assignment + Subject Assignment */}
-            <Col md={6}>
-              <div className="d-flex align-items-center gap-2 mb-3 mt-4 mt-md-0">
-                <FaEnvelope className="text-primary" />
-                <h5 className="fw-bold mb-0">Contact Details</h5>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Email</Form.Label>
-                <Form.Control
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter email address"
-                  required
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>
-                  Password (Leave blank to keep current password)
-                </Form.Label>
-                <Form.Control
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter new password (optional)"
-                  type="password"
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Phone Number</Form.Label>
-                <Form.Control
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Enter phone number"
-                  required
-                />
-              </Form.Group>
-
-              {/* Subject Assignment Section - moved here for better balance */}
-              {/* <Card className="shadow-sm rounded-3 border-0 p-3 mt-4 bg-light">
-                <div className="d-flex align-items-center gap-2 mb-2">
-                  <FaBookOpen className="text-primary" />
-                  <h5 className="fw-bold mb-0">Subject Assignments</h5>
-                </div>
-                <Row>
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Semester</Form.Label>
-                      <Select
-                        options={semesters.map((sem) => ({
-                          value: sem,
-                          label: `Semester ${sem}`,
-                        }))}
-                        value={
-                          formData.semester
-                            ? {
-                                value: formData.semester,
-                                label: `Semester ${formData.semester}`,
-                              }
-                            : null
-                        }
-                        onChange={(selected) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            semester: selected ? selected.value : "",
-                          }))
-                        }
-                        placeholder="Select Semester"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col xs={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Subjects</Form.Label>
-                      <Select
-                        options={subjectOptions.map((sub) => ({
-                          value: sub,
-                          label: sub,
-                        }))}
-                        value={
-                          formData.subject
-                            ? {
-                                value: formData.subject,
-                                label: formData.subject,
-                              }
-                            : null
-                        }
-                        onChange={(selected) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            subject: selected ? selected.value : "",
-                          }))
-                        }
-                        placeholder="Select Subject"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <div className="mb-3">
-                  <Button
-                    variant="outline-primary"
-                    className="fw-bold px-3 py-1 rounded-pill"
-                    onClick={handleAddAssignment}
-                    disabled={
-                      !(
-                        formData.semester &&
-                        formData.subject &&
-                        formData.semester !== "Select" &&
-                        formData.subject !== "Select"
-                      )
-                    }
-                  >
-                    Add Assignment
-                  </Button>
-                </div>
-
-                {/* Assigned Subjects List  
-                {assignedSubjects.length > 0 && (
-                  <div className="mb-2">
-                    <h6 className="fw-bold">Assigned Subjects:</h6>
-                    <ul className="list-group">
-                      {assignedSubjects.map((a, idx) => (
-                        <li
-                          key={idx}
-                          className="list-group-item d-flex justify-content-between align-items-center"
-                        >
-                          <span>
-                            {a.semesterType} - Semester {a.semester} - {a.academicYear} - {a.name}
-                          </span>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleRemoveAssignment(idx)}
-                          >
-                            Remove
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </Card> */}
-            </Col>
-          </Row>
-
-          <div className="text-end mt-3">
-            <Button
-              type="submit"
-              variant="primary"
-              className="fw-bold px-4 py-2 d-flex align-items-center gap-2 rounded-pill"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div
-                    className="spinner-border spinner-border-sm"
-                    role="status"
-                  >
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <FaUserPlus /> Update Faculty
-                </>
-              )}
-            </Button>
-          </div>
-
-          {error && (
-            <Alert variant="danger" className="mt-4 rounded-3 shadow-sm">
-              <strong>Error:</strong> {error}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert variant="success" className="mt-4 rounded-3 shadow-sm">
-              Faculty member <strong>{formData.name}</strong> updated
-              successfully. Redirecting to faculty list...
-            </Alert>
-          )}
-        </Form>
-      </Card>
-    </Container>
+    </div>
   );
 }
 

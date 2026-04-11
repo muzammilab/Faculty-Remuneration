@@ -5,20 +5,28 @@ import AdminNavbar from "../AdminNavbar";
 import AdminMobileSidebar from "../AdminMobileSidebar";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchSubjects, fetchSubjecDetails, createSubject, updateSubject, deleteSubject } from "../../../store/subjectSlice"; 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchSubjects,
+  fetchSubjecDetails,
+  createSubject,
+  updateSubject,
+  deleteSubject,
+} from "../../../store/subjectSlice";
 
 function SubjectsManagement() {
   const dispatch = useDispatch();
   // Fetch subjects from Redux store
-  const { subjects, loading, error } = useSelector((state) => state.subjectSlice); // all fetched subjects are stored here using Redux store and loading state while performing async operations 
+  const { subjects, loading, error } = useSelector(
+    (state) => state.subjectSlice,
+  ); // all fetched subjects are stored here using Redux store and loading state while performing async operations
 
   const navigate = useNavigate();
   const [showSidebar, setShowSidebar] = useState(false); // for showing mobile sidebar
   const [showModal, setShowModal] = useState(false); // for showing add/edit subject modal
-  const [searchTerm, setSearchTerm] = useState(""); // search input state used for searching subjects in search bar 
+  const [searchTerm, setSearchTerm] = useState(""); // search input state used for searching subjects in search bar
 
-  // Filter states 
+  // Filter states
   const [selectedBranch, setSelectedBranch] = useState("Computer Engineering"); // for toggling branch buttons
   const [selectedSemester, setSelectedSemester] = useState("all"); // for semester dropdown to show particular semester subjects
 
@@ -28,38 +36,65 @@ function SubjectsManagement() {
     code: "",
     semester: "",
     department: "",
-    hasTermWork: false,   // <-- NEW
-    hasTermTest: false,
+
+    hasTermWork: false,
+    hasOral: false, // <-- NEW
     hasPractical: false,
+    hasTermTest: false,
     hasSemesterExam: false,
-  });                       // form data for add/edit subject
+
+    termWorkMarks: 0,
+    oralMarks: 0,
+    practicalMarks: 0,
+    termTestMarks: 0,
+    semesterExamMarks: 0,
+  }); // form data for add/edit subject
 
   const handleShowModal = (subject = null) => {
     if (subject) {
       setEditingSubject(subject._id);
+
       setSubjectData({
-        name: subject.name,
-        code: subject.code,
-        semester: subject.semester,
-        department: subject.department,
-        hasTermWork: subject.hasTermWork, // <-- NEW
-        hasTermTest: subject.hasTermTest,
-        hasPractical: subject.hasPractical,
-        hasSemesterExam: subject.hasSemesterExam,
+        name: subject.name || "",
+        code: subject.code || "",
+        semester: subject.semester || "",
+        department: subject.department || "",
+
+        hasTermWork: subject.hasTermWork || false,
+        hasOral: subject.hasOral || false,
+        hasTermTest: subject.hasTermTest || false,
+        hasPractical: subject.hasPractical || false,
+        hasSemesterExam: subject.hasSemesterExam || false,
+
+        termWorkMarks: subject.termWorkMarks ?? 0,
+        oralMarks: subject.oralMarks ?? 0,
+        termTestMarks: subject.termTestMarks ?? 0,
+        practicalMarks: subject.practicalMarks ?? 0,
+        semesterExamMarks: subject.semesterExamMarks ?? 0,
       });
     } else {
       setEditingSubject(null);
+
       setSubjectData({
         name: "",
         code: "",
         semester: "",
         department: "",
-        hasTermWork: false, // <-- NEW
+
+        hasTermWork: false,
+        hasOral: false,
         hasTermTest: false,
         hasPractical: false,
         hasSemesterExam: false,
+
+        termWorkMarks: 0,
+        oralMarks: 0,
+        termTestMarks: 0,
+        practicalMarks: 0,
+        semesterExamMarks: 0,
       });
     }
+
     setShowModal(true);
   };
 
@@ -68,20 +103,33 @@ function SubjectsManagement() {
   const handleSidebarOpen = () => setShowSidebar(true); // to open mobile sidebar
   const handleSidebarClose = () => setShowSidebar(false); // to close mobile sidebar
 
-  // Fetch all subjects on component mount from Redux store
+  /********** Fetch all subjects on component mount from Redux store **********/
   useEffect(() => {
     dispatch(fetchSubjects());
   }, [dispatch]);
 
-  // Handle form input changes while adding/editing subject
+  /********** Handle form input changes while adding/editing subject **********/
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSubjectData({
-      ...subjectData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
 
+    if (type === "checkbox") {
+      const marksField = name.charAt(3).toLowerCase() + name.slice(4) + "Marks";
+
+      setSubjectData((prev) => ({
+        ...prev,
+        [name]: checked,
+        ...(!checked && { [marksField]: null }),
+      }));
+    } else {
+      setSubjectData((prev) => ({
+        ...prev,
+        [name]:
+          type === "number" ? (value === "" ? null : Number(value)) : value,
+      }));
+    }
+  }; 
+
+  /********** Handle Save of New OR Edited details of a subject **********/
   const handleSave = async () => {
     if (editingSubject) {
       dispatch(updateSubject({ id: editingSubject, subjectData }));
@@ -91,20 +139,21 @@ function SubjectsManagement() {
     handleCloseModal(); // Close modal after saving
   };
 
+  /********** Handle Delete of Subjec **********/
   const handleDelete = async (subjectId, subjectName) => {
     if (window.confirm(`Are you sure you want to delete ${subjectName}?`)) {
       dispatch(deleteSubject(subjectId));
     }
   };
 
-  // Get unique branches
+  /********** Get unique branches **********/
   const branches = [
     // "all",
     ...Array.from(new Set(subjects.map((s) => s.department))),
   ];
   const semesters = Array.from({ length: 8 }, (_, i) => i + 1);
 
-  // Advanced filtering
+  /********** Advanced Filtering **********/
   const filteredSubjects = subjects.filter((s) => {
     const matchesSearch =
       s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +172,10 @@ function SubjectsManagement() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <div className="flex h-screen overflow-hidden">
         {/* Mobile Sidebar */}
-        <AdminMobileSidebar handleSidebarClose={handleSidebarClose} showSidebar={showSidebar} />
+        <AdminMobileSidebar
+          handleSidebarClose={handleSidebarClose}
+          showSidebar={showSidebar}
+        />
 
         {/* Desktop Sidebar */}
         <AdminDesktopSidebar />
@@ -362,7 +414,7 @@ function SubjectsManagement() {
                           Department
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Assessment
+                          Assessment | Marks
                         </th>
                         <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Actions
@@ -392,25 +444,30 @@ function SubjectsManagement() {
                             {subject.department}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               {subject.hasTermTest && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                                  TT
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 shadow-sm hover:bg-green-200 transition-colors">
+                                  TT | {subject.termTestMarks}
                                 </span>
                               )}
                               {subject.hasTermWork && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                  TW
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 shadow-sm hover:bg-blue-200 transition-colors">
+                                  TW | {subject.termWorkMarks}
+                                </span>
+                              )}
+                              {subject.hasOral && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 border border-pink-200 shadow-sm hover:bg-pink-200 transition-colors">
+                                  OR | {subject.oralMarks}
                                 </span>
                               )}
                               {subject.hasPractical && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                                  PR
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200 shadow-sm hover:bg-purple-200 transition-colors">
+                                  OR & PR | {subject.practicalMarks}
                                 </span>
                               )}
                               {subject.hasSemesterExam && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                                  SE
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200 shadow-sm hover:bg-orange-200 transition-colors">
+                                  SE | {subject.semesterExamMarks}
                                 </span>
                               )}
                             </div>
@@ -444,63 +501,76 @@ function SubjectsManagement() {
 
       {/* Add/Edit Modal with Subject Code Input */}
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex justify-center">
-          <div className="absolute flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-              onClick={handleCloseModal}
-            ></div>
-            <span className="hidden sm:inline-block sm:h-screen sm:align-middle">
-              &#8203;
-            </span>
-            <div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 ease-out sm:my-8 sm:align-middle sm:max-w-lg sm:w-full scale-95 opacity-0 animate-modalIn">
-              <div className="bg-white px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+            onClick={handleCloseModal}
+          ></div>
+
+          <div className="flex min-h-screen items-center justify-center px-4 py-8">
+            <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-gray-100 animate-modalIn overflow-hidden">
+              {/* Header */}
+              <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+                    <h3 className="text-xl font-semibold text-gray-900 tracking-tight">
                       {editingSubject ? "Edit Subject" : "Add New Subject"}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Configure subject details and assessment types
+                    <p className="text-sm text-gray-500 mt-1">
+                      Configure subject details and assessment structure
                     </p>
                   </div>
+
                   <button
                     onClick={handleCloseModal}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
                   >
                     <FaTimes size={18} />
                   </button>
                 </div>
+              </div>
 
+              {/* Body */}
+              <div className="max-h-[75vh] overflow-y-auto px-6 py-6 space-y-8">
+                {/* Subject Details */}
                 <div className="space-y-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                      Subject Information
+                    </h4>
+                    <div className="h-px bg-gray-100 mt-2"></div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Subject Name <span className="text-red-500">*</span>
                     </label>
+
                     <input
                       type="text"
                       name="name"
                       value={subjectData.name}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
                       placeholder="Enter subject name"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Semester <span className="text-red-500">*</span>
                       </label>
+
                       <input
                         type="number"
                         name="semester"
                         value={subjectData.semester}
                         onChange={handleChange}
-                        className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
-                        placeholder="1 - 8"
                         min="1"
                         max="8"
+                        placeholder="1 - 8"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                       />
                     </div>
 
@@ -508,98 +578,142 @@ function SubjectsManagement() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Department <span className="text-red-500">*</span>
                       </label>
+
                       <select
                         name="department"
                         value={subjectData.department}
                         onChange={handleChange}
-                        className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 hover:bg-white transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                       >
                         <option value="" disabled>
                           Select department
                         </option>
-                        <option value="Computer Engineering">Computer Engineering</option>
-                        <option value="AIDS Engineering">Artificial Intelligence & Data Science Engineering</option>
-                        <option value="ECS Engineering">Electronics & Computer Science Engineering</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Computer Engineering">
+                          Computer Engineering
+                        </option>
+                        <option value="AIDS Engineering">
+                          Artificial Intelligence & Data Science Engineering
+                        </option>
+                        <option value="ECS Engineering">
+                          Electronics & Computer Science Engineering
+                        </option>
+                        <option value="Mechanical Engineering">
+                          Mechanical Engineering
+                        </option>
+                        <option value="Civil Engineering">
+                          Civil Engineering
+                        </option>
                       </select>
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-4 border-t border-gray-100">
-                    <p className="block text-sm font-medium text-gray-700 mb-3">
+                {/* Assessment Types */}
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
                       Assessment Types
-                    </p>
-                    <div className="space-y-3">
-                      <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="hasTermWork"
-                          checked={subjectData.hasTermWork}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm text-gray-700">
-                          Has Term Work
-                        </span>
-                      </label>
+                    </h4>
+                    <div className="h-px bg-gray-100 mt-2"></div>
+                  </div>
 
-                      <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="hasTermTest"
-                          checked={subjectData.hasTermTest}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm text-gray-700">
-                          Has Term Test
-                        </span>
-                      </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Card */}
+                    {[
+                      {
+                        label: "Term Work",
+                        check: "hasTermWork",
+                        marks: "termWorkMarks",
+                      },
+                      {
+                        label: "Oral",
+                        check: "hasOral",
+                        marks: "oralMarks",
+                      },
+                      {
+                        label: "Oral with Practical",
+                        check: "hasPractical",
+                        marks: "practicalMarks",
+                      },
+                      {
+                        label: "Term Test",
+                        check: "hasTermTest",
+                        marks: "termTestMarks",
+                      },
+                      {
+                        label: "Semester Exam",
+                        check: "hasSemesterExam",
+                        marks: "semesterExamMarks",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.check}
+                        className="border border-gray-200 rounded-2xl p-4 bg-white hover:shadow-sm transition-all"
+                      >
+                        <label className="flex items-center justify-between cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              name={item.check}
+                              checked={subjectData[item.check]}
+                              onChange={handleChange}
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
 
-                      <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="hasPractical"
-                          checked={subjectData.hasPractical}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm text-gray-700">
-                          Has Practical/Oral
-                        </span>
-                      </label>
+                            <span className="text-sm font-medium text-gray-800">
+                              {item.label}
+                            </span>
+                          </div>
 
-                      <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          name="hasSemesterExam"
-                          checked={subjectData.hasSemesterExam}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-3 text-sm text-gray-700">
-                          Has Semester Exam
-                        </span>
-                      </label>
-                    </div>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              subjectData[item.check]
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {subjectData[item.check] ? "Enabled" : "Disabled"}
+                          </span>
+                        </label>
+
+                        <div className="mt-4">
+                          <input
+                            type="number"
+                            name={item.marks}
+                            value={subjectData[item.marks] ?? ""}
+                            onChange={handleChange}
+                            placeholder="Enter Marks"
+                            disabled={!subjectData[item.check]}
+                            className={`w-full px-3 py-2.5 border rounded-xl text-sm transition-all ${
+                              !subjectData[item.check]
+                                ? "bg-gray-100 cursor-not-allowed opacity-60 border-gray-200"
+                                : "bg-gray-50 focus:bg-white border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50/80 px-6 py-3 sm:flex sm:flex-row-reverse gap-3">
-                <button
-                  onClick={handleSave}
-                  className="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-medium text-white hover:shadow-md hover:-translate-y-[1px] transition-all sm:ml-3 sm:w-auto cursor-pointer"
-                >
-                  {editingSubject ? "Update Subject" : "Save Subject"}
-                </button>
-                <button
-                  onClick={handleCloseModal}
-                  className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors sm:mt-0 sm:w-auto cursor-pointer"
-                >
-                  Cancel
-                </button>
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-6 py-4">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-5 py-2.5 rounded-2xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleSave}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-medium text-white hover:shadow-md hover:-translate-y-[1px] transition-all"
+                  >
+                    {editingSubject ? "Update Subject" : "Save Subject"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

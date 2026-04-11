@@ -50,7 +50,8 @@ exports.getSinglePayment = async (req, res) => {
         subjectTotal: item.subjectTotal,
         academicYear: p.academicYear,
         semesterType: p.semesterType, // <- keeps Odd/Even
-          department: item.department, // <-- NEW
+        department: item.department, // <-- NEW
+
         termTestAssessment: item.termTestAssessment,
         termWorkAssessment: item.termWorkAssessment,
         oralPracticalAssessment: item.oralPracticalAssessment,
@@ -245,21 +246,15 @@ exports.postCreate = async (req, res) => {
         subjectId: subject._id,
         subjectName: subjectItem.subjectName || subject.name,
         semester: subjectItem.semester || subject.semester,
-        department: subjectItem.department || subject.department, // <-- NEW 
-        termTestAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
+        department: subjectItem.department || subject.department, 
+
         termWorkAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
-        oralPracticalAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
+        practicalAssessment: { applicable: false, count: 0, rate: 0, amount: 0 }, // <-- NEW
+        oralAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
+        termTestAssessment: { applicable: false, count: 0, rate: 0, amount: 0 },
         paperChecking: { applicable: false, count: 0, rate: 0, amount: 0 },
         subjectTotal: 0,
       };
-
-      // 💠 Term Test
-      if (subject.hasTermTest && faculty.designation !== "External Examiner") {
-        const { count = 0, rate = 0 } = subjectItem.termTestAssessment || {};
-        const amount = count * rate;
-        updated.termTestAssessment = { applicable: true, count, rate, amount };
-        subjectTotal += amount;
-      }
 
       // 💠 Term Work
       if (subject.hasTermWork && faculty.designation !== "External Examiner") {
@@ -269,11 +264,27 @@ exports.postCreate = async (req, res) => {
         subjectTotal += amount;
       }
 
-      // 💠 Oral/Practical
+      // 💠 Oral with Practical
       if (subject.hasPractical) {
-        const { count = 0, rate = 0 } = subjectItem.oralPracticalAssessment || {};
+        const { count = 0, rate = 0 } = subjectItem.practicalAssessment || {};
         const amount = count * rate;
-        updated.oralPracticalAssessment = { applicable: true, count, rate, amount };
+        updated.practicalAssessment = { applicable: true, count, rate, amount };
+        subjectTotal += amount;
+      }
+
+      // 💠 Oral
+      if (subject.hasOral) {
+        const { count = 0, rate = 0 } = subjectItem.oralAssessment || {};
+        const amount = count * rate;
+        updated.oralAssessment = { applicable: true, count, rate, amount };
+        subjectTotal += amount;
+      }
+
+      // 💠 Term Test
+      if (subject.hasTermTest && faculty.designation !== "External Examiner") {
+        const { count = 0, rate = 0 } = subjectItem.termTestAssessment || {};
+        const amount = count * rate;
+        updated.termTestAssessment = { applicable: true, count, rate, amount };
         subjectTotal += amount;
       }
 
@@ -326,19 +337,18 @@ exports.postCreate = async (req, res) => {
         0
       );
 
-      payment.totalAmount = /* payment.baseSalary + */ payment.travelAllowance + payment.totalRemuneration;
+      payment.totalAmount = payment.travelAllowance + payment.totalRemuneration;
 
       await payment.save();
       return res.status(200).json({ message: "Payment updated", payment });
     } else {
       // Create new payment doc
-      const totalAmount = /* baseSalary + */ travelAllowance + totalRemuneration;
+      const totalAmount = travelAllowance + totalRemuneration;
       payment = new Payment({
         facultyId,
         facultyName,
         academicYear,
         semesterType,
-        // baseSalary,
         travelAllowance,
         subjectBreakdown: updatedSubjectBreakdown,
         totalRemuneration,

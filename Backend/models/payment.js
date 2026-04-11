@@ -22,19 +22,25 @@ const paymentSchema = new mongoose.Schema(
         subjectName: String,
         department: String, // <-- NEW 
         semester: Number,
-        termTestAssessment: {
-          applicable: { type: Boolean, default: false },
-          count: { type: Number, default: 0 },
-          rate: { type: Number, default: 0 },
-          amount: { type: Number, default: 0 },
-        },
         termWorkAssessment: {
           applicable: { type: Boolean, default: false },
           count: { type: Number, default: 0 },
           rate: { type: Number, default: 0 },
           amount: { type: Number, default: 0 },
         },
-        oralPracticalAssessment: {
+        practicalAssessment: {
+          applicable: { type: Boolean, default: false },
+          count: { type: Number, default: 0 },
+          rate: { type: Number, default: 0 },
+          amount: { type: Number, default: 0 },
+        },
+        oralAssessment: {
+          applicable: { type: Boolean, default: false },
+          count: { type: Number, default: 0 },
+          rate: { type: Number, default: 0 },
+          amount: { type: Number, default: 0 },
+        },
+        termTestAssessment: {
           applicable: { type: Boolean, default: false },
           count: { type: Number, default: 0 },
           rate: { type: Number, default: 0 },

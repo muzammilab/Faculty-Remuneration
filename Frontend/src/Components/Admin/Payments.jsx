@@ -1,12 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  FaSave,
-  FaSyncAlt,
-  FaUser,
-  FaDollarSign,
-  FaBook,
-  FaCheckCircle,
-} from "react-icons/fa";
+import { FaSave, FaSyncAlt, FaUser, FaDollarSign, FaBook, FaCheckCircle } from "react-icons/fa";
 import Select from "react-select";
 import AdminNavbar from "./AdminNavbar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -44,14 +37,21 @@ function Payments() {
   // State variables for remuneration form
   const [selectedSubject, setSelectedSubject] = useState("");
   // const [selectedSubjectDetails, setSelectedSubjectDetails] = useState(null);
-  const [termTestPapers, setTermTestPapers] = useState("");
-  const [termTestRate, setTermTestRate] = useState("");
   const [termWorkPapers, setTermWorkPapers] = useState("");
   const [termWorkRate, setTermWorkRate] = useState("");
+
   const [oralPapers, setOralPapers] = useState("");
   const [oralRate, setOralRate] = useState("");
+
+  const [practicalPapers, setPracticalPapers] = useState(""); // <-- NEW
+  const [practicalRate, setPracticalRate] = useState(""); // <-- NEW
+
+  const [termTestPapers, setTermTestPapers] = useState("");
+  const [termTestRate, setTermTestRate] = useState("");
+
   const [semesterPapers, setSemesterPapers] = useState("");
   const [semesterRate, setSemesterRate] = useState("");
+
   const [calculatedRemunerations, setCalculatedRemunerations] = useState([]);
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear());
   const [totalPayment, setTotalPayment] = useState(0);
@@ -64,7 +64,7 @@ function Payments() {
     dispatch(fetchFaculties());
   }, []);
 
-  // Handle faculty selection
+  /********** Handle faculty selection **********/
   const handleFacultyChange = async (facultyId) => {
     setSelectedFaculty(facultyId);
     setSelectedSemester("");
@@ -92,7 +92,8 @@ function Payments() {
       }
     }
   };
-  // Handle semester selection
+  
+  /********** Handle semester selection **********/
   const handleSemesterChange = async (semesterJson) => {
     setSelectedSemester(semesterJson);
     const semesterObj = JSON.parse(semesterJson); // now we have full object
@@ -122,7 +123,7 @@ function Payments() {
     }
   };
 
-  // Get subjects display string
+  /********** Get subjects display string **********/
   const getSubjectsDisplay = () => {
     if (subjects.length === 0) return "No subjects assigned";
     return subjects.map((subject) => subject.name).join(", ");
@@ -136,6 +137,8 @@ function Payments() {
     // setSelectedSubject(subjectName);
 
     // Reset form fields
+    setOralPapers(""); // <-- NEW
+    setOralRate(""); // <-- NEW
     setTermTestPapers("");
     setTermTestRate("");
     setTermWorkPapers("");
@@ -165,7 +168,7 @@ function Payments() {
     dispatch(fetchSubjecDetails(subjectObj.subjectId));
   };
 
-  // Handle save payment button click - Add subject to calculation (no database save)
+  /********** Handle save payment button click - Add subject to calculation (no database save) **********/
   const handleSavePayment = async () => {
     if (!selectedSubject) {
       alert("Please select a subject");
@@ -199,14 +202,17 @@ function Payments() {
       const termWorkTotal = selectedSubjectDetails?.hasTermWork
         ? (parseInt(termWorkPapers) || 0) * (parseInt(termWorkRate) || 0)
         : 0;
-      const oralTotal = selectedSubjectDetails?.hasPractical
+      const oralTotal = selectedSubjectDetails?.hasOral
         ? (parseInt(oralPapers) || 0) * (parseInt(oralRate) || 0)
+        : 0;
+      const practicalTotal = selectedSubjectDetails?.hasPractical
+        ? (parseInt(practicalPapers) || 0) * (parseInt(practicalRate) || 0)
         : 0;
       const semesterTotal = selectedSubjectDetails?.hasSemesterExam
         ? (parseInt(semesterPapers) || 0) * (parseInt(semesterRate) || 0)
         : 0;
       const totalPayment =
-        termTestTotal + termWorkTotal + oralTotal + semesterTotal;
+        termTestTotal + termWorkTotal + oralTotal + practicalTotal + semesterTotal;
 
       setTotalPayment(totalPayment);
 
@@ -217,14 +223,22 @@ function Payments() {
         department: selectedSubject.department,
         semester: selectedSubjectObj.semester,
         semesterLabel: JSON.parse(selectedSemester).label,
+
         termTestPapers: parseInt(termTestPapers) || 0,
         termTestRate: parseInt(termTestRate) || 0,
+
         termWorkPapers: parseInt(termWorkPapers) || 0,
         termWorkRate: parseInt(termWorkRate) || 0,
+
         oralPapers: parseInt(oralPapers) || 0,
         oralRate: parseInt(oralRate) || 0,
+
+        practicalPapers: parseInt(practicalPapers) || 0, // <-- NEW ( Means Oral with Practical count )
+        practicalRate: parseInt(practicalRate) || 0, // <-- NEW ( Means Oral with Practical rate )
+
         semesterPapers: parseInt(semesterPapers) || 0,
         semesterRate: parseInt(semesterRate) || 0,
+        
         totalPayment: totalPayment,
       };
 
@@ -245,6 +259,8 @@ function Payments() {
       setTermWorkRate("");
       setOralPapers("");
       setOralRate("");
+      setPracticalPapers(""); // <-- NEW
+      setPracticalRate(""); // <-- NEW
       setSemesterPapers("");
       setSemesterRate("");
 
@@ -260,7 +276,7 @@ function Payments() {
     }
   };
 
-  // Handle final calculation and save to database
+  /********** Handle Final Calculation and Save to Database **********/
   const handleUpdateFinalCalculation = async () => {
     if (calculatedRemunerations.length === 0) {
       alert(
@@ -290,6 +306,7 @@ function Payments() {
               subjectName: remuneration.subjectName, // ADDed
               department: remuneration.department, // <-- NEW
               semester: remuneration.semester, // ADDed
+
               termTestAssessment: {
                 // Added
                 count: remuneration.termTestPapers,
@@ -302,6 +319,10 @@ function Payments() {
               oralPracticalAssessment: {
                 count: remuneration.oralPapers,
                 rate: remuneration.oralRate,
+              },
+              practicalAssessment: {                  // <-- NEW
+                count: remuneration.practicalPapers,
+                rate: remuneration.practicalRate,
               },
               paperChecking: {
                 count: remuneration.semesterPapers,
@@ -338,7 +359,6 @@ function Payments() {
             department: remuneration.department, // <-- NEW
             semester: remuneration.semester,
             termTestAssessment: {
-              // Added
               count: remuneration.termTestPapers,
               rate: remuneration.termTestRate,
             },
@@ -349,6 +369,10 @@ function Payments() {
             oralPracticalAssessment: {
               count: remuneration.oralPapers,
               rate: remuneration.oralRate,
+            },
+            practicalAssessment: {                  // <-- NEW
+              count: remuneration.practicalPapers,
+              rate: remuneration.practicalRate,
             },
             paperChecking: {
               count: remuneration.semesterPapers,
@@ -397,6 +421,8 @@ function Payments() {
         setTermWorkRate("");
         setOralPapers("");
         setOralRate("");
+        setPracticalPapers(""); // <-- NEW
+        setPracticalRate(""); // <-- NEW
         setSemesterPapers("");
         setSemesterRate("");
         // dispatch(fetchPayments());
@@ -648,16 +674,6 @@ function Payments() {
                     <span className="flex gap-2 mt-2">
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                          selectedSubjectDetails.hasTermTest
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"} Term
-                        Test
-                      </span>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
                           selectedSubjectDetails.hasTermWork
                             ? "bg-blue-100 text-blue-800"
                             : "bg-gray-100 text-gray-600"
@@ -674,7 +690,27 @@ function Payments() {
                         }`}
                       >
                         {selectedSubjectDetails.hasPractical ? "✓" : "✗"}{" "}
-                        Practical
+                        Oral with Practical
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasOral
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasOral ? "✓" : "✗"}{" "}
+                        Oral
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                          selectedSubjectDetails.hasTermTest
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedSubjectDetails.hasTermTest ? "✓" : "✗"} Term
+                        Test
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -742,6 +778,40 @@ function Payments() {
                   />
                 </div>
 
+                {/* Oral Exam Assessment */}
+                {selectedSubjectDetails?.hasOral &&
+                  facultyData?.designation !== "External Examiner" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          No. of Oral Papers
+                        </label>
+                        <input
+                          type="number"
+                          value={oralPapers}
+                          onChange={(e) => setOralPapers(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rate per Paper
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            value={oralRate}
+                            onChange={(e) => setOralRate(e.target.value)}
+                            className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                )}
+
                 {/* Term Test Assessment */}
                 {selectedSubjectDetails?.hasTermTest &&
                   facultyData?.designation !== "External Examiner" && (
@@ -774,10 +844,10 @@ function Payments() {
                         </div>
                       </div>
                     </div>
-                  )}
+                )}
 
                 {/* Term Work Assessment */}
-                {selectedSubjectDetails?.hasTermTest &&
+                {selectedSubjectDetails?.hasTermWork &&
                   facultyData?.designation !== "External Examiner" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
                       <div>
@@ -810,17 +880,17 @@ function Payments() {
                     </div>
                   )}
 
-                {/* Oral/Practical Assessment */}
+                {/* Oral with Practical Assessment */}
                 {selectedSubjectDetails?.hasPractical && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Oral/Practical Papers
+                        Oral with Practical Papers
                       </label>
                       <input
                         type="number"
-                        value={oralPapers}
-                        onChange={(e) => setOralPapers(e.target.value)}
+                        value={practicalPapers}
+                        onChange={(e) => setPracticalPapers(e.target.value)}
                         className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
                       />
                     </div>
@@ -834,8 +904,8 @@ function Payments() {
                         </span>
                         <input
                           type="number"
-                          value={oralRate}
-                          onChange={(e) => setOralRate(e.target.value)}
+                          value={practicalRate}
+                          onChange={(e) => setPracticalRate(e.target.value)}
                           className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
                         />
                       </div>
@@ -926,24 +996,31 @@ function Payments() {
                           Semester
                         </th>
                         {calculatedRemunerations.some(
-                          (r) => r.termTestPapers > 0
-                        ) && (
-                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Term Test
-                          </th>
-                        )}
-                        {calculatedRemunerations.some(
                           (r) => r.termWorkPapers > 0
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Term Work
                           </th>
                         )}
+                        {calculatedRemunerations.some( /* <-- NEW */
+                          (r) => r.practicalPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Oral with Practical
+                          </th>
+                        )}
                         {calculatedRemunerations.some(
                           (r) => r.oralPapers > 0
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Oral/Practical
+                            Oral
+                          </th>
+                        )}
+                        {calculatedRemunerations.some(
+                          (r) => r.termTestPapers > 0
+                        ) && (
+                          <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Term Test
                           </th>
                         )}
                         {calculatedRemunerations.some(
@@ -976,22 +1053,6 @@ function Payments() {
                             </span>
                           </td>
                           {calculatedRemunerations.some(
-                            (r) => r.termTestPapers > 0
-                          ) && (
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                              {remuneration.termTestPapers > 0 ? (
-                                <span className="text-gray-900">
-                                  {remuneration.termTestPapers} ×{" "}
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                                    ₹ {remuneration.termTestRate}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">---</span>
-                              )}
-                            </td>
-                          )}
-                          {calculatedRemunerations.some(
                             (r) => r.termWorkPapers > 0
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -1004,6 +1065,22 @@ function Payments() {
                                 </span>
                               ) : (
                                 <span className="text-gray-400">---</span>
+                              )}
+                            </td>
+                          )}
+                          {calculatedRemunerations.some( /* <-- NEW */
+                            (r) => r.practicalPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                              {remuneration.practicalPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.practicalPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹ {remuneration.practicalRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
                               )}
                             </td>
                           )}
@@ -1020,6 +1097,22 @@ function Payments() {
                                 </span>
                               ) : (
                                 <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          )}
+                          {calculatedRemunerations.some(
+                            (r) => r.termTestPapers > 0
+                          ) && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                              {remuneration.termTestPapers > 0 ? (
+                                <span className="text-gray-900">
+                                  {remuneration.termTestPapers} ×{" "}
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                    ₹ {remuneration.termTestRate}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">---</span>
                               )}
                             </td>
                           )}

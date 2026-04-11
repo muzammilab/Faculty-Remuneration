@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  FaPrint,
-  FaFileExport,
-  FaArrowLeft,
-  FaUser,
-  FaCalendar,
-  FaDollarSign,
-  FaCalculator,
-} from "react-icons/fa";
+import { FaPrint, FaFileExport, FaArrowLeft, FaUser, FaCalendar, FaDollarSign, FaCalculator } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,7 +12,7 @@ function FacultyPaymentDetails() {
   const { id, academicYear, semesterType } = useParams();
 
   const { facultyPaymentDetails, loading } = useSelector(
-    (state) => state.paymentSlice
+    (state) => state.paymentSlice,
   );
 
   const isLoading = loading.paymentDetailList;
@@ -30,7 +22,7 @@ function FacultyPaymentDetails() {
 
   useEffect(() => {
     dispatch(
-      fetchFacultyPaymentDetails({ facultyId: id, academicYear, semesterType })
+      fetchFacultyPaymentDetails({ facultyId: id, academicYear, semesterType }),
     );
   }, [dispatch, id, academicYear, semesterType]);
 
@@ -115,7 +107,7 @@ function FacultyPaymentDetails() {
                       if (paymentId) {
                         window.open(
                           `${API_BASE}/payment/generate-pdf/${paymentId}`,
-                          "_blank"
+                          "_blank",
                         );
                       }
                     }}
@@ -154,7 +146,7 @@ function FacultyPaymentDetails() {
                           <FaUser size={14} />
                           Total: ₹
                           {parseFloat(
-                            remuneration.payment?.totalAmount || 0
+                            remuneration.payment?.totalAmount || 0,
                           ).toLocaleString()}
                         </span>
                         <span className="flex items-center gap-2 text-gray-700">
@@ -189,7 +181,7 @@ function FacultyPaymentDetails() {
                         <p className="text-3xl font-bold">
                           ₹
                           {parseFloat(
-                            remuneration.payment?.totalAmount || 0
+                            remuneration.payment?.totalAmount || 0,
                           ).toLocaleString()}
                         </p>
                       </div>
@@ -214,19 +206,25 @@ function FacultyPaymentDetails() {
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Subject
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Term Work
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Oral/Practical
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Oral with Practical
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Semester Papers
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Oral Exam
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Term Test
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Semester Exam
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Semester
                         </th>
-                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           Total
                         </th>
                       </tr>
@@ -240,30 +238,75 @@ function FacultyPaymentDetails() {
                           <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                             {item.subjectName}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            ₹{item.termTestAssessment?.rate || 0} ×{" "}
-                            {item.termTestAssessment?.count || 0} = ₹
-                            {item.termTestAssessment?.amount || 0}
+                          <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs text-gray-500">
+                                ₹ {item.termWorkAssessment?.rate || 0} ×{" "}
+                                {item.termWorkAssessment?.count || 0}
+                              </span>
+                              <span className="font-semibold text-green-600">
+                                ₹ {item.termWorkAssessment?.amount || 0}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            ₹{item.oralPracticalAssessment?.rate || 0} ×{" "}
-                            {item.oralPracticalAssessment?.count || 0} = ₹
-                            {item.oralPracticalAssessment?.amount || 0}
+
+                          <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs text-gray-500">
+                                ₹ {item.practicalAssessment?.rate || 0} ×{" "}
+                                {item.practicalAssessment?.count || 0}
+                              </span>
+                              <span className="font-semibold text-green-600">
+                                ₹ {item.practicalAssessment?.amount || 0}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            ₹{item.paperChecking?.rate || 0} ×{" "}
-                            {item.paperChecking?.count || 0} = ₹
-                            {item.paperChecking?.amount || 0}
+
+                          <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs text-gray-500">
+                                ₹ {item.oralAssessment?.rate || 0} ×{" "}
+                                {item.oralAssessment?.count || 0}
+                              </span>
+                              <span className="font-semibold text-green-600">
+                                ₹ {item.oralAssessment?.amount || 0}
+                              </span>
+                            </div>
                           </td>
+
+                          <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs text-gray-500">
+                                ₹ {item.termTestAssessment?.rate || 0} ×{" "}
+                                {item.termTestAssessment?.count || 0}
+                              </span>
+                              <span className="font-semibold text-green-600">
+                                ₹ {item.termTestAssessment?.amount || 0}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 text-sm text-gray-600 text-center">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs text-gray-500">
+                                ₹ {item.paperChecking?.rate || 0} ×{" "}
+                                {item.paperChecking?.count || 0}
+                              </span>
+                              <span className="font-semibold text-green-600">
+                                ₹ {item.paperChecking?.amount || 0}
+                              </span>
+                            </div>
+                          </td>
+
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               Semester {item.semester}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right font-semibold text-lg text-emerald-700">
-                            ₹
+                            ₹ {""}
                             {parseFloat(
-                              item.subjectTotal || 0
+                              item.subjectTotal || 0,
                             ).toLocaleString()}
                           </td>
                         </tr>
@@ -285,9 +328,9 @@ function FacultyPaymentDetails() {
                       Travel Allowance
                     </span>
                     <span className="font-semibold text-gray-900">
-                      ₹
+                      ₹ {""}
                       {parseFloat(
-                        remuneration.payment?.travelAllowance || 0
+                        remuneration.payment?.travelAllowance || 0,
                       ).toLocaleString()}
                     </span>
                   </div>
@@ -296,9 +339,9 @@ function FacultyPaymentDetails() {
                       Calculated Remuneration
                     </span>
                     <span className="font-semibold text-gray-900">
-                      ₹
+                      ₹ {""}
                       {parseFloat(
-                        remuneration.payment?.totalRemuneration || 0
+                        remuneration.payment?.totalRemuneration || 0,
                       ).toLocaleString()}
                     </span>
                   </div>
@@ -307,9 +350,9 @@ function FacultyPaymentDetails() {
                       Total Amount
                     </span>
                     <span className="text-2xl font-bold text-emerald-700">
-                      ₹
+                      ₹ {""}
                       {parseFloat(
-                        remuneration.payment?.totalAmount || 0
+                        remuneration.payment?.totalAmount || 0,
                       ).toLocaleString()}
                     </span>
                   </div>

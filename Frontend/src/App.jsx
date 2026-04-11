@@ -32,6 +32,7 @@ import { fetchUserRole } from "./store/authSlice";
 import LoaderUI from "./Components/LoaderUI";
 import { useEffect } from "react";
 import OAuthSuccess from "./Components/OAuthSuccess";
+import AdminRateConfig from "./Components/Admin/AdminRateConfig";
 
 function App() {
   const dispatch = useDispatch();
@@ -70,6 +71,11 @@ function App() {
         {/* Only admin */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin/payments" element={<Payments />}></Route>
+
+          <Route
+            path="/admin/rates"
+            element={ <AdminRateConfig />}
+          ></Route>
 
           <Route
             path="/admin/managepayments"

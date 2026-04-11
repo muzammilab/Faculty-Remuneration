@@ -19,7 +19,9 @@ const checkRoleRoute = require("./routes/checkRole");
 const amountPayRouter = require("./routes/amountPayRoute");
 const passport = require("passport");
 const googleAuthRoute = require("./routes/googleAuthRoute");
+const seedRateConfig = require("./seedRateConfig");
 require("./google");
+const rateListRoute = require("./routes/rateListRoute");
 
 const MONGO_DB_URL = process.env.MONGO_URI;
 const app = express();
@@ -54,13 +56,17 @@ app.use("/payment", generatePDF);
 app.use("/", forgetPasswordRouter);
 app.use("/", changePasswordRouter);
 app.use("/", amountPayRouter);
+app.use("/admin/rates", rateListRoute);
 
 const PORT = process.env.PORT || 3003;
-
+ 
 mongoose
   .connect(MONGO_DB_URL)
-  .then(() => {
+  .then(async () => {
     console.log("✅ Connected to MongoDB");
+
+    await seedRateConfig();  // ⭐ THIS RUNS THE FILE
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });

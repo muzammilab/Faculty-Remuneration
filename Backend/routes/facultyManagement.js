@@ -7,8 +7,8 @@ const isAdmin = require("../controllers/isAdmin");
 // Add New Faculty
 facultyManagement.post(
   "/add",
-  /* jwtAuthMiddleware,
-  isAdmin,  */
+  jwtAuthMiddleware,
+  isAdmin,  
   facultyManagementC.addFaculty
 );
 
@@ -23,8 +23,8 @@ facultyManagement.put(
 // Remove asssigned subjects
 facultyManagement.put(
   "/:id/remove-subject",
-  /* jwtAuthMiddleware,
-  isAdmin, */  
+  jwtAuthMiddleware,
+  isAdmin,   
   facultyManagementC.removeSubject
 );
 

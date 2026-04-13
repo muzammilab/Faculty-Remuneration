@@ -24,15 +24,17 @@ import ProtectedRoute from "./Components/UserProtectedRoute";
 import UpdateAssignment from "./Components/Admin/Faculty Manager/UpdateAssignment";
 import Logout from "./Components/Logout";
 import Unauthorized from "./Components/UnAuthorized";
-import { Toaster } from "react-hot-toast";
 import SubjectsManagement from "./Components/Admin/Subject Manager/SubjectManagement";
 import LandingPage from "./Components/LandingPage";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchUserRole } from "./store/authSlice";
 import LoaderUI from "./Components/LoaderUI";
-import { useEffect } from "react";
 import OAuthSuccess from "./Components/OAuthSuccess";
 import AdminRateConfig from "./Components/Admin/AdminRateConfig";
+import EnrollmentRecords from "./Components/Admin/EnrollmentRecords";
+
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserRole } from "./store/authSlice";
+import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
 
 function App() {
   const dispatch = useDispatch();
@@ -75,6 +77,11 @@ function App() {
           <Route
             path="/admin/rates"
             element={ <AdminRateConfig />}
+          ></Route>
+
+          <Route
+            path="/admin/enrollment-records"
+            element={ <EnrollmentRecords />}
           ></Route>
 
           <Route

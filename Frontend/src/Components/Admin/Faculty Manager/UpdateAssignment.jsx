@@ -1,18 +1,33 @@
 import { useState, useEffect } from "react";
-import { FaArrowLeft, FaBookOpen, FaCalendarAlt, FaLayerGroup, FaPlus, FaTrash, FaUser, FaBuilding, FaSave, FaEdit } from "react-icons/fa";
+import { FaArrowLeft, FaBookOpen, FaCalendarAlt, FaLayerGroup, FaPlus, FaTrash, FaUser, FaBuilding, FaSave } from "react-icons/fa";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 import Select from "react-select";
 import toast from "react-hot-toast";
 
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFacultyById, removeFacultySubject, updateFacultyAssignments, resetUpdateState } from "../../../store/facultySlice";
-import { fetchSubjectsBySemester, clearSubjects } from "../../../store/subjectSlice";
+import {
+  fetchFacultyById,
+  removeFacultySubject,
+  updateFacultyAssignments,
+  resetUpdateState,
+} from "../../../store/facultySlice";
+import {
+  fetchSubjectsBySemester,
+  clearSubjects,
+} from "../../../store/subjectSlice";
 
 function UpdateAssignment() {
   const dispatch = useDispatch();
-  const { facultyDetails: faculty, updateSuccess, loading, error } = useSelector((state) => state.facultySlice);
-  const { subjects: subjectOptions } = useSelector((state) => state.subjectSlice);
+  const {
+    facultyDetails: faculty,
+    updateSuccess,
+    loading,
+    error,
+  } = useSelector((state) => state.facultySlice);
+  const { subjects: subjectOptions } = useSelector(
+    (state) => state.subjectSlice,
+  );
   const isLoading = loading.updateAssignmentLoading;
   // const faculty = facultyDetails || {};
   // const subjectOptions = subjects;
@@ -25,8 +40,14 @@ function UpdateAssignment() {
 
   const branchOptions = [
     { value: "Computer Engineering", label: "Computer Engineering" },
-    { value: "AIDS Engineering", label: "Artificial Intelligence & Data Science Engineering" },
-    { value: "ECS Engineering", label: "Electronics & Computer Science Engineering" },
+    {
+      value: "AIDS Engineering",
+      label: "Artificial Intelligence & Data Science Engineering",
+    },
+    {
+      value: "ECS Engineering",
+      label: "Electronics & Computer Science Engineering",
+    },
     { value: "Mechanical Engineering", label: "Mechanical Engineering" },
     { value: "Civil Engineering", label: "Civil Engineering" },
   ];
@@ -58,7 +79,7 @@ function UpdateAssignment() {
         fetchSubjectsBySemester({
           semester: formData.semester,
           department: formData.branch,
-        })
+        }),
       )
         .unwrap()
         .catch((err) => {
@@ -78,29 +99,36 @@ function UpdateAssignment() {
       return;
     }
 
-      dispatch(
-        removeFacultySubject({
-          id,
-          academicYear,
-          semesterType,
-          subjectId,
-        })
-      )
+    dispatch(
+      removeFacultySubject({
+        id,
+        academicYear,
+        semesterType,
+        subjectId,
+      }),
+    );
   };
 
   const handleAddSubject = (e) => {
     e.preventDefault();
-    if (formData.semester && formData.subject && formData.branch) { // ← ADDed formData.branch
+    if (formData.semester && formData.subject && formData.branch) {
+      // ← ADDed formData.branch
       if (
         !formData.subjects.some(
-          (s) => s.name === formData.subject && s.semester === formData.semester
+          (s) =>
+            s.name === formData.subject && s.semester === formData.semester,
         )
       ) {
         setFormData((prev) => ({
           ...prev,
           subjects: [
             ...prev.subjects,
-            { subjectId: formData.subject, name: formData.subjectName, semester: formData.semester, branch: formData.branch /* ← NEW branch field */ },
+            {
+              subjectId: formData.subject,
+              name: formData.subjectName,
+              semester: formData.semester,
+              branch: formData.branch /* ← NEW branch field */,
+            },
           ],
         }));
         setFormData((prev) => ({ ...prev, subject: "" }));
@@ -124,8 +152,8 @@ function UpdateAssignment() {
         academicYear: formData.academicYear,
         semesterType: formData.semesterType,
         subjects: formData.subjects,
-      })
-    )
+      }),
+    );
   };
 
   useEffect(() => {
@@ -134,7 +162,7 @@ function UpdateAssignment() {
       setFormData({
         academicYear: "",
         semesterType: "",
-        branch: "",  // ← NEW
+        branch: "", // ← NEW
         semester: "",
         subject: "",
         subjectName: "", // ← NEW
@@ -199,9 +227,12 @@ function UpdateAssignment() {
                         </h4>
                         {/* Add department display */}
                         {facultyDepartment && (
-                          <p className="text-sm text-gray-500 mt-1">Department: {facultyDepartment}</p>  // ← ADD THIS
+                          <p className="text-sm text-gray-500 mt-1">
+                            Department: {facultyDepartment}
+                          </p> // ← ADD THIS
                         )}
-                        {/* <p className="text-sm text-gray-600">ID: {id}</p> */} {/* <-- Just for checking */}
+                        {/* <p className="text-sm text-gray-600">ID: {id}</p> */}{" "}
+                        {/* <-- Just for checking */}
                       </div>
                     </div>
                   )}
@@ -234,7 +265,7 @@ function UpdateAssignment() {
                               <option key={year} value={year}>
                                 {year}
                               </option>
-                            )
+                            ),
                           )}
                         </select>
                         {formData.academicYear && (
@@ -255,7 +286,7 @@ function UpdateAssignment() {
                             setFormData({
                               ...formData,
                               semesterType: e.target.value,
-                              branch: "",  // ← NEW
+                              branch: "", // ← NEW
                               semester: "",
                             })
                           }
@@ -281,7 +312,10 @@ function UpdateAssignment() {
                           formData.branch
                             ? {
                                 value: formData.branch,
-                                label: branchOptions.find((b) => b.value === formData.branch)?.label || formData.branch,
+                                label:
+                                  branchOptions.find(
+                                    (b) => b.value === formData.branch,
+                                  )?.label || formData.branch,
                               }
                             : null
                         }
@@ -309,7 +343,12 @@ function UpdateAssignment() {
                       />
                       {formData.branch && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-3 block">
-                          Selected Branch: {branchOptions.find((b) => b.value === formData.branch)?.label}
+                          Selected Branch:{" "}
+                          {
+                            branchOptions.find(
+                              (b) => b.value === formData.branch,
+                            )?.label
+                          }
                         </span>
                       )}
                     </div>
@@ -340,7 +379,9 @@ function UpdateAssignment() {
                             })
                           }
                           placeholder="Select Semester"
-                          isDisabled={!formData.semesterType || !formData.branch}
+                          isDisabled={
+                            !formData.semesterType || !formData.branch
+                          }
                           className="basic-select"
                           classNamePrefix="select"
                           styles={{
@@ -363,27 +404,25 @@ function UpdateAssignment() {
                           </label>
                           <Select
                             options={subjectOptions.map((sub) => ({
-      value: sub.subjectId,
-      label: sub.name,
-    }))}
-
-    value={
-      formData.subject
-        ? {
-            value: formData.subject,
-            label: formData.subjectName,
-          }
-        : null
-    }
-
-    onChange={(selected) => {
-      console.log('Selected:', selected);
-      setFormData((prev) => ({
-        ...prev,
-        subject: selected ? selected.value : "",
-        subjectName: selected ? selected.label : "",
-      }))
-    }}
+                              value: sub.subjectId,
+                              label: sub.name,
+                            }))}
+                            value={
+                              formData.subject
+                                ? {
+                                    value: formData.subject,
+                                    label: formData.subjectName,
+                                  }
+                                : null
+                            }
+                            onChange={(selected) => {
+                              console.log("Selected:", selected);
+                              setFormData((prev) => ({
+                                ...prev,
+                                subject: selected ? selected.value : "",
+                                subjectName: selected ? selected.label : "",
+                              }));
+                            }}
                             placeholder="Select Subject"
                             isDisabled={!formData.semester || !formData.branch}
                             className="basic-select"
@@ -403,7 +442,13 @@ function UpdateAssignment() {
                         <button
                           type="button"
                           onClick={handleAddSubject}
-                          disabled={!(formData.semester && formData.subject && formData.branch)}
+                          disabled={
+                            !(
+                              formData.semester &&
+                              formData.subject &&
+                              formData.branch
+                            )
+                          }
                           className="flex items-center justify-center w-12 h-12 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-xl hover:bg-blue-100 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer"
                         >
                           <FaPlus size={16} />
@@ -465,7 +510,6 @@ function UpdateAssignment() {
                         )}
                       </button>
                     </div>
-
                   </form>
                 </div>
               </div>
@@ -542,7 +586,7 @@ function UpdateAssignment() {
                                               handleDeleteSubject(
                                                 yearGroup.academicYear,
                                                 semGroup.semesterType,
-                                                subj.subjectId
+                                                subj.subjectId,
                                               )
                                             }
                                             className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-200 hover:shadow-md transition-all cursor-pointer"

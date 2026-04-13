@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  FaEdit,
-  FaFileInvoiceDollar,
-  FaSearch,
-  FaTimes,
-  FaDollarSign,
-} from "react-icons/fa";
+import { FaEdit, FaFileInvoiceDollar, FaSearch, FaDollarSign } from "react-icons/fa";
 import AdminNavbar from "./AdminNavbar";
 import AdminDesktopSidebar from "./AdminDesktopSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";

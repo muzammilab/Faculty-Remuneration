@@ -208,7 +208,7 @@ exports.getFacultySubjectsBySemester = async (req, res) => {
     const matchedSubjects = semBlock.subjects.filter(
       (subj) => subj.semester === parseInt(semester)
     );
-
+    console.log("Matched Subjects --> ", matchedSubjects);
     res.json(matchedSubjects);
   } catch (error) {
     console.error("Error fetching faculty subjects:", error);

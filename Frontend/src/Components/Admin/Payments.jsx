@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { FaSave, FaSyncAlt, FaUser, FaDollarSign, FaBook, FaCheckCircle } from "react-icons/fa";
+import {
+  FaSave,
+  FaSyncAlt,
+  FaUser,
+  FaDollarSign,
+  FaBook,
+  FaCheckCircle,
+} from "react-icons/fa";
 import Select from "react-select";
 import AdminNavbar from "./AdminNavbar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -22,9 +29,10 @@ function Payments() {
   } = useSelector((state) => state.subjectSlice);
 
   const { facultyList, loading: fetchFacultiesLoading } = useSelector(
-    (state) => state.facultySlice
+    (state) => state.facultySlice,
   );
 
+  const [examinerType, setExaminerType] = useState("assessment");
   const [showSidebar, setShowSidebar] = useState(false);
   // const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState("");
@@ -76,11 +84,12 @@ function Payments() {
         setLoading(true);
         // Fetch faculty data
         const facultyResponse = await api.get(
-          `/admin/payment/faculty/${facultyId}`
+          `/admin/payment/faculty/${facultyId}`,
         );
         setFacultyData(facultyResponse.data);
+        console.log("Faculty data set to state --> ", facultyData);
         const semestersResponse = await api.get(
-          `/admin/payment/faculty/${facultyId}/semesters`
+          `/admin/payment/faculty/${facultyId}/semesters`,
         );
         console.log(semestersResponse.data);
         setSemesters(semestersResponse.data);
@@ -92,7 +101,15 @@ function Payments() {
       }
     }
   };
-  
+
+  /********** Handle examiner type selection **********/
+  const handleExaminerTypeChange = (type) => {
+    console.log("Examiner type changed to:", type);
+    setExaminerType(type);
+    console.log("Examiner type state updated to:", examinerType);
+    handleSubjectChange(selectedSubject, type); // Re-fetch rates for the currently selected subject with the new examiner type
+  };
+
   /********** Handle semester selection **********/
   const handleSemesterChange = async (semesterJson) => {
     setSelectedSemester(semesterJson);
@@ -110,7 +127,7 @@ function Payments() {
       try {
         setLoading(true);
         const response = await api.get(
-          `/admin/payment/faculty/${selectedFaculty}/semester/${sem}/year/${academicYear}/semType/${semesterType}/subjects`
+          `/admin/payment/faculty/${selectedFaculty}/semester/${sem}/year/${academicYear}/semType/${semesterType}/subjects`,
         );
         console.log(response.data);
         setSubjects(response.data);
@@ -130,23 +147,25 @@ function Payments() {
   };
 
   // Handle subject selection and fetch details
-  const handleSubjectChange = async (subjectObj) => {
-    console.log("From handleSubjectChange ==> ", subjectObj);
-    // console.log(subjectName);
+  const handleSubjectChange = async (subjectObj, examiner) => {
+    console.log("subjectOBJ", subjectObj);
+    console.log("Examiner type in subject change handler --> ", examiner);
     setSelectedSubject(subjectObj);
+    console.log("Selected subject set to state --> ", selectedSubject);
     // setSelectedSubject(subjectName);
 
-    // Reset form fields
-    setOralPapers(""); // <-- NEW
-    setOralRate(""); // <-- NEW
-    setTermTestPapers("");
-    setTermTestRate("");
-    setTermWorkPapers("");
-    setTermWorkRate("");
-    setOralPapers("");
-    setOralRate("");
-    setSemesterPapers("");
-    setSemesterRate("");
+    const responseRate = await api.post("/admin/rates/getRateBasedOnMarks", {
+      subjectId: subjectObj.subjectId, // ✅ FIXED
+      faculty: facultyData,
+      examinerType: examiner || examinerType, // Use the passed examiner type or fallback to state
+    });
+
+    // ✅ SET RATES
+    setOralRate(responseRate.data.oralMarks || "");
+    setTermTestRate(responseRate.data.termTestMarks || "");
+    setTermWorkRate(responseRate.data.termWorkMarks || "");
+    setSemesterRate(responseRate.data.semesterMarks || "");
+    setPracticalRate(responseRate.data.practicalMarks || "");
 
     if (!subjectObj) return;
 
@@ -163,7 +182,7 @@ function Payments() {
     // Fetch subject details using Redux action
     console.log(
       "The selected subject from faculty assigned subjects is ==>",
-      subjectObj
+      subjectObj,
     );
     dispatch(fetchSubjecDetails(subjectObj.subjectId));
   };
@@ -184,7 +203,7 @@ function Payments() {
       setLoading(true);
       // Find the selected subject object to get its ID
       const selectedSubjectObj = subjects.find(
-        (subject) => subject.subjectId === selectedSubject.subjectId
+        (subject) => subject.subjectId === selectedSubject.subjectId,
       );
 
       if (!selectedSubjectObj) {
@@ -212,7 +231,11 @@ function Payments() {
         ? (parseInt(semesterPapers) || 0) * (parseInt(semesterRate) || 0)
         : 0;
       const totalPayment =
-        termTestTotal + termWorkTotal + oralTotal + practicalTotal + semesterTotal;
+        termTestTotal +
+        termWorkTotal +
+        oralTotal +
+        practicalTotal +
+        semesterTotal;
 
       setTotalPayment(totalPayment);
 
@@ -238,7 +261,7 @@ function Payments() {
 
         semesterPapers: parseInt(semesterPapers) || 0,
         semesterRate: parseInt(semesterRate) || 0,
-        
+
         totalPayment: totalPayment,
       };
 
@@ -246,7 +269,7 @@ function Payments() {
         "Adding remuneration for subject:",
         selectedSubject,
         "with ID:",
-        selectedSubjectObj.subjectId
+        selectedSubjectObj.subjectId,
       );
 
       setCalculatedRemunerations((prev) => [...prev, calculatedRemuneration]);
@@ -266,7 +289,7 @@ function Payments() {
 
       toast.success(
         'Subject added to calculation. Click "Update Final Calculation" to save to database.',
-        { duration: 4000 }
+        { duration: 4000 },
       );
     } catch (error) {
       console.error("Error adding subject to calculation:", error);
@@ -280,7 +303,7 @@ function Payments() {
   const handleUpdateFinalCalculation = async () => {
     if (calculatedRemunerations.length === 0) {
       alert(
-        "Please add at least one subject remuneration before final calculation"
+        "Please add at least one subject remuneration before final calculation",
       );
       return;
     }
@@ -299,7 +322,7 @@ function Payments() {
           // Use the stored subjectId directly if available
           if (remuneration.subjectId) {
             console.log(
-              `Using stored subjectId: ${remuneration.subjectId} for subject: ${remuneration.subjectName} of ${remuneration.department}`
+              `Using stored subjectId: ${remuneration.subjectId} for subject: ${remuneration.subjectName} of ${remuneration.department}`,
             );
             return {
               subjectId: remuneration.subjectId,
@@ -320,7 +343,8 @@ function Payments() {
                 count: remuneration.oralPapers,
                 rate: remuneration.oralRate,
               },
-              practicalAssessment: {                  // <-- NEW
+              practicalAssessment: {
+                // <-- NEW
                 count: remuneration.practicalPapers,
                 rate: remuneration.practicalRate,
               },
@@ -337,7 +361,7 @@ function Payments() {
               subject.name.trim().toLowerCase() ===
                 remuneration.subjectName.trim().toLowerCase() &&
               subject.department === remuneration.department &&
-              subject.semester === remuneration.semester
+              subject.semester === remuneration.semester,
           );
 
           if (!subjectObj) {
@@ -350,7 +374,7 @@ function Payments() {
           }
 
           console.log(
-            `Matched "${remuneration.subjectName}" with "${subjectObj.name}" SubjectObj: "${subjectObj}"`
+            `Matched "${remuneration.subjectName}" with "${subjectObj.name}" SubjectObj: "${subjectObj}"`,
           );
 
           return {
@@ -370,7 +394,8 @@ function Payments() {
               count: remuneration.oralPapers,
               rate: remuneration.oralRate,
             },
-            practicalAssessment: {                  // <-- NEW
+            practicalAssessment: {
+              // <-- NEW
               count: remuneration.practicalPapers,
               rate: remuneration.practicalRate,
             },
@@ -385,13 +410,13 @@ function Payments() {
       // Remove duplicates based on subjectId
       const uniqueSubjectBreakdown = subjectBreakdown.filter(
         (item, index, self) =>
-          index === self.findIndex((t) => t.subjectId === item.subjectId)
+          index === self.findIndex((t) => t.subjectId === item.subjectId),
       );
 
       console.log("All calculated remunerations:", calculatedRemunerations);
       console.log(
         "Available subjects:",
-        subjects.map((s) => ({ name: s.name, subjectId: s.subjectId }))
+        subjects.map((s) => ({ name: s.name, subjectId: s.subjectId })),
       );
       console.log("Subject breakdown being sent:", uniqueSubjectBreakdown);
 
@@ -492,15 +517,15 @@ function Payments() {
                           ? {
                               value: selectedFaculty,
                               label: facultyList.find(
-                                (f) => f._id === selectedFaculty
+                                (f) => f._id === selectedFaculty,
                               )
                                 ? `${
                                     facultyList.find(
-                                      (f) => f._id === selectedFaculty
+                                      (f) => f._id === selectedFaculty,
                                     ).name
                                   } - ${
                                     facultyList.find(
-                                      (f) => f._id === selectedFaculty
+                                      (f) => f._id === selectedFaculty,
                                     ).designation
                                   }`
                                 : "",
@@ -689,8 +714,8 @@ function Payments() {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {selectedSubjectDetails.hasPractical ? "✓" : "✗"}{" "}
-                        Oral with Practical
+                        {selectedSubjectDetails.hasPractical ? "✓" : "✗"} Oral
+                        with Practical
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -699,8 +724,7 @@ function Payments() {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {selectedSubjectDetails.hasOral ? "✓" : "✗"}{" "}
-                        Oral
+                        {selectedSubjectDetails.hasOral ? "✓" : "✗"} Oral
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
@@ -803,6 +827,7 @@ function Payments() {
                           </span>
                           <input
                             type="number"
+                            readOnly
                             value={oralRate}
                             onChange={(e) => setOralRate(e.target.value)}
                             className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -810,7 +835,7 @@ function Payments() {
                         </div>
                       </div>
                     </div>
-                )}
+                  )}
 
                 {/* Term Test Assessment */}
                 {selectedSubjectDetails?.hasTermTest &&
@@ -837,6 +862,7 @@ function Payments() {
                           </span>
                           <input
                             type="number"
+                            readOnly
                             value={termTestRate}
                             onChange={(e) => setTermTestRate(e.target.value)}
                             className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -844,7 +870,7 @@ function Payments() {
                         </div>
                       </div>
                     </div>
-                )}
+                  )}
 
                 {/* Term Work Assessment */}
                 {selectedSubjectDetails?.hasTermWork &&
@@ -871,6 +897,7 @@ function Payments() {
                           </span>
                           <input
                             type="number"
+                            readOnly
                             value={termWorkRate}
                             onChange={(e) => setTermWorkRate(e.target.value)}
                             className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -904,6 +931,7 @@ function Payments() {
                         </span>
                         <input
                           type="number"
+                          readOnly
                           value={practicalRate}
                           onChange={(e) => setPracticalRate(e.target.value)}
                           className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
@@ -914,6 +942,75 @@ function Payments() {
                 )}
 
                 {/* Semester Papers */}
+
+                {/* {selectedSubjectDetails?.hasSemesterExam && (<div className="md:w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Examiner Type
+                  </label>
+
+                  <select
+                    value={examinerType}
+                    onChange={(e) => handleExaminerTypeChange(e.target.value)}
+                    className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm"
+                  >
+                    <option value="assessment">Assessment</option>
+                    <option value="moderation">Moderation</option>
+                  </select>
+                </div> )} */}
+
+                {selectedSubjectDetails?.hasSemesterExam && (
+                  <div className="md:w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Examiner Type
+                    </label>
+
+                    <Select
+                      options={[
+                        { value: "assessment", label: "Assessment" },
+                        { value: "moderation", label: "Moderation" },
+                      ]}
+                      value={
+                        examinerType
+                          ? {
+                              value: examinerType,
+                              label:
+                                examinerType === "assessment"
+                                  ? "Assessment"
+                                  : "Moderation",
+                            }
+                          : null
+                      }
+                      onChange={(selected) =>
+                        handleExaminerTypeChange(selected ? selected.value : "")
+                      }
+                      placeholder="Choose..."
+                      isSearchable={false}
+                      className="basic-select"
+                      classNamePrefix="select"
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                      styles={{
+                        control: (provided) => ({
+                          ...provided,
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "12px",
+                          padding: "4px",
+                          minHeight: "48px",
+                          backgroundColor: "#f9fafb",
+                          boxShadow: "none",
+                          "&:hover": {
+                            borderColor: "#e5e7eb",
+                          },
+                        }),
+                        menuPortal: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                        }),
+                      }}
+                    />
+                  </div>
+                )}
+
                 {selectedSubjectDetails?.hasSemesterExam &&
                   facultyData?.designation !== "External Examiner" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
@@ -938,6 +1035,7 @@ function Payments() {
                           </span>
                           <input
                             type="number"
+                            readOnly
                             value={semesterRate}
                             onChange={(e) => setSemesterRate(e.target.value)}
                             className="block w-full pl-8 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
@@ -996,35 +1094,36 @@ function Payments() {
                           Semester
                         </th>
                         {calculatedRemunerations.some(
-                          (r) => r.termWorkPapers > 0
+                          (r) => r.termWorkPapers > 0,
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Term Work
                           </th>
                         )}
-                        {calculatedRemunerations.some( /* <-- NEW */
-                          (r) => r.practicalPapers > 0
+                        {calculatedRemunerations.some(
+                          /* <-- NEW */
+                          (r) => r.practicalPapers > 0,
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Oral with Practical
                           </th>
                         )}
                         {calculatedRemunerations.some(
-                          (r) => r.oralPapers > 0
+                          (r) => r.oralPapers > 0,
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Oral
                           </th>
                         )}
                         {calculatedRemunerations.some(
-                          (r) => r.termTestPapers > 0
+                          (r) => r.termTestPapers > 0,
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Term Test
                           </th>
                         )}
                         {calculatedRemunerations.some(
-                          (r) => r.semesterPapers > 0
+                          (r) => r.semesterPapers > 0,
                         ) && (
                           <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Semester Papers
@@ -1053,7 +1152,7 @@ function Payments() {
                             </span>
                           </td>
                           {calculatedRemunerations.some(
-                            (r) => r.termWorkPapers > 0
+                            (r) => r.termWorkPapers > 0,
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                               {remuneration.termWorkPapers > 0 ? (
@@ -1068,8 +1167,9 @@ function Payments() {
                               )}
                             </td>
                           )}
-                          {calculatedRemunerations.some( /* <-- NEW */
-                            (r) => r.practicalPapers > 0
+                          {calculatedRemunerations.some(
+                            /* <-- NEW */
+                            (r) => r.practicalPapers > 0,
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                               {remuneration.practicalPapers > 0 ? (
@@ -1085,7 +1185,7 @@ function Payments() {
                             </td>
                           )}
                           {calculatedRemunerations.some(
-                            (r) => r.oralPapers > 0
+                            (r) => r.oralPapers > 0,
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                               {remuneration.oralPapers > 0 ? (
@@ -1101,7 +1201,7 @@ function Payments() {
                             </td>
                           )}
                           {calculatedRemunerations.some(
-                            (r) => r.termTestPapers > 0
+                            (r) => r.termTestPapers > 0,
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                               {remuneration.termTestPapers > 0 ? (
@@ -1117,7 +1217,7 @@ function Payments() {
                             </td>
                           )}
                           {calculatedRemunerations.some(
-                            (r) => r.semesterPapers > 0
+                            (r) => r.semesterPapers > 0,
                           ) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                               {remuneration.semesterPapers > 0 ? (
@@ -1190,7 +1290,7 @@ function Payments() {
                       {(
                         calculatedRemunerations.reduce(
                           (sum, item) => sum + item.totalPayment,
-                          0
+                          0,
                         ) + (facultyData ? facultyData.travelAllowance || 0 : 0)
                       ).toLocaleString()}
                     </span>

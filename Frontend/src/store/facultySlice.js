@@ -130,6 +130,7 @@ export const fetchFacultyById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await api.get(`/admin/faculty/getSingle/${id}`);
+      console.log("Faculty details fetched", response.data);
       return response.data;
     } catch (err) {
       return rejectWithValue({

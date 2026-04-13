@@ -1,4 +1,4 @@
-import { FaMoneyCheckAlt, FaSyncAlt, FaHistory, FaUsers, FaSignOutAlt, FaBook, FaClipboardList } from "react-icons/fa";
+import { FaMoneyCheckAlt, FaSyncAlt, FaHistory, FaUsers, FaSignOutAlt, FaBook, FaClipboardList, FaFileInvoiceDollar, FaRupeeSign } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 
 function AdminSidebar() {
@@ -17,6 +17,7 @@ function AdminSidebar() {
         { icon: <FaUsers />, label: "Faculty Management", path: "/admin/facultymanager" },
         { icon: <FaBook />, label: "Subject Management", path: "/admin/subjectmanager" },
         { icon: <FaClipboardList />, label: "Enrollment Records", path: "/admin/enrollment-records" },
+        { icon: <FaRupeeSign />, label: "Remuneration Rate", path: "/admin/rates" },
       ],
     },
   ];

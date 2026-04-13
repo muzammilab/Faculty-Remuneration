@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  FaUsers,
-  FaPlus,
-  FaChevronRight,
-  FaTimes,
-  FaHistory,
-} from "react-icons/fa";
+import { FaUsers, FaPlus, FaChevronRight, FaTimes, FaHistory } from "react-icons/fa";
 import Select from "react-select";
 
 const DRAFT_KEY = "add_class_draft";
@@ -459,18 +453,18 @@ function AddClassModal({ onClose, onSave }) {
             Save Entry
           </button>
         </div>
-        
       </div>
-
     </div>
   );
 }
 
 // ─── Tree Table ──────────────────────────────────────────────────────────────
-function TreeTable({ entries }) {
+function TreeTable({ entries, setEntries }) {
   const [openAY, setOpenAY] = useState({});
   const [openYear, setOpenYear] = useState({});
   const [openSem, setOpenSem] = useState({});
+  const [editSem, setEditSem] = useState(null); // <-- NEW
+  const [editCounts, setEditCounts] = useState({}); // <-- NEW
 
   const toggleAY = (ay) => setOpenAY((p) => ({ ...p, [ay]: !p[ay] }));
   const toggleYear = (k) => setOpenYear((p) => ({ ...p, [k]: !p[k] }));
@@ -483,6 +477,34 @@ function TreeTable({ entries }) {
     if (!grouped[ay][year]) grouped[ay][year] = {};
     grouped[ay][year][sem] = subjects;
   });
+
+  const handleEdit = (key, subjects) => {
+    const counts = {};
+    subjects.forEach((sub) => {
+      counts[sub.name] = sub.count;
+    });
+
+    setEditSem(key);
+    setEditCounts(counts);
+  };
+
+  const handleSave = (entries, ay, yr, sem) => {
+    const updated = entries.map((entry) => {
+      if (entry.ay === ay && entry.year === yr && entry.sem === sem) {
+        return {
+          ...entry,
+          subjects: entry.subjects.map((sub) => ({
+            ...sub,
+            count: Number(editCounts[sub.name]) || 0,
+          })),
+        };
+      }
+      return entry;
+    });
+
+    setEntries(updated); // from parent
+    setEditSem(null);
+  };
 
   if (entries.length === 0) {
     return (
@@ -498,33 +520,35 @@ function TreeTable({ entries }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
-        <thead className="bg-gray-50/70 border-b border-gray-200">
+    <div className="overflow-x-auto rounded-2xl">
+      <table className="min-w-full text-sm border-separate border-spacing-y-2 px-3">
+        <thead>
           <tr>
-            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-full">
+            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Class / Subject
             </th>
-            <th className="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Semester
             </th>
-            <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-              No. of Students
+
+            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Students
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-100 text-sm">
+        <tbody className="text-sm">
           {Object.keys(grouped).map((ay) => (
             <>
               {/* AY Row */}
               <tr
                 key={ay}
                 onClick={() => toggleAY(ay)}
-                className="bg-gray-50/80 hover:bg-blue-50/60 cursor-pointer transition-colors"
+                className="bg-slate-100 hover:bg-slate-200 cursor-pointer transition-all rounded-2xl shadow-sm"
               >
                 <td
                   colSpan={3}
-                  className="px-6 py-3.5 font-semibold text-gray-800 border-t border-gray-100"
+                  className="px-6 py-4 font-bold text-gray-800 rounded-2xl"
                 >
                   <span className="flex items-center gap-2">
                     <FaChevronRight
@@ -545,11 +569,11 @@ function TreeTable({ entries }) {
                       <tr
                         key={yKey}
                         onClick={() => toggleYear(yKey)}
-                        className="hover:bg-blue-50/60 cursor-pointer transition-colors"
+                        className="bg-blue-50 hover:bg-blue-100 cursor-pointer transition-all rounded-2xl"
                       >
                         <td
                           colSpan={3}
-                          className="pl-12 pr-6 py-3.5 text-gray-700 font-medium border-t border-gray-100"
+                          className="pl-12 pr-6 py-4 text-gray-800 font-semibold rounded-2xl"
                         >
                           <span className="flex items-center gap-2">
                             <FaChevronRight
@@ -578,32 +602,82 @@ function TreeTable({ entries }) {
                                 <tr
                                   key={sKey}
                                   onClick={() => toggleSem(sKey)}
-                                  className="hover:bg-blue-50/60 cursor-pointer transition-colors"
+                                  className="group cursor-pointer"
                                 >
-                                  <td className="pl-20 pr-6 py-3.5 text-gray-600 border-t border-gray-100">
-                                    <span className="flex items-center gap-2">
-                                      <FaChevronRight
-                                        size={8}
-                                        className={`text-gray-400 transition-transform duration-150 ${openSem[sKey] ? "rotate-90" : ""}`}
-                                      />
-                                      Semester {semNum}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-3.5 text-center text-gray-600">
-                                    <span
-                                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                                        sem === "Odd"
-                                          ? "bg-amber-50 text-amber-800 border-amber-200"
-                                          : "bg-blue-50 text-blue-800 border-blue-200"
-                                      }`}
-                                    >
-                                      {sem}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-3.5 text-right text-sm text-gray-500">
-                                    <span className="font-medium text-gray-700">
-                                      {total} total
-                                    </span>
+                                  <td colSpan={3} className="px-6 py-4">
+                                    <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-3 hover:border-blue-300 hover:bg-blue-50/40 transition-all">
+                                      {/* Left Section */}
+                                      <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                          <FaChevronRight
+                                            size={10}
+                                            className={`text-blue-600 transition-transform duration-200 ${
+                                              openSem[sKey] ? "rotate-90" : ""
+                                            }`}
+                                          />
+                                        </div>
+
+                                        <span className="font-semibold text-gray-800 text-sm">
+                                          Semester {semNum}
+                                        </span>
+
+                                        <span
+                                          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${
+                                            sem === "Odd"
+                                              ? "bg-amber-50 text-amber-700 border-amber-200"
+                                              : "bg-blue-50 text-blue-700 border-blue-200"
+                                          }`}
+                                        >
+                                          {sem}
+                                        </span>
+                                      </div>
+
+                                      {/* Right Section */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="inline-flex px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                                          {total} Students
+                                        </span>
+
+                                        {editSem === sKey ? (
+                                          <>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSave(
+                                                  entries,
+                                                  ay,
+                                                  yr,
+                                                  sem,
+                                                );
+                                              }}
+                                              className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700"
+                                            >
+                                              Save
+                                            </button>
+
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditSem(null);
+                                              }}
+                                              className="px-3 py-1 border border-gray-300 rounded-lg text-xs text-gray-700 hover:bg-gray-50"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEdit(sKey, subjects);
+                                            }}
+                                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200"
+                                          >
+                                            Edit
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
                                   </td>
                                 </tr>
 
@@ -612,18 +686,33 @@ function TreeTable({ entries }) {
                                   subjects.map((sub) => (
                                     <tr
                                       key={sub.name}
-                                      className="bg-gray-50/50 hover:bg-gray-50/80 transition-colors"
+                                      className="bg-gray-50 hover:bg-gray-100 transition-all"
                                     >
-                                      <td className="pl-28 pr-6 py-2.5 text-gray-700 text-sm">
+                                      <td className="pl-28 pr-6 py-3 text-gray-700 font-medium rounded-l-xl">
                                         {sub.name}
                                       </td>
-                                      <td className="px-6 py-2.5 text-center text-gray-400 text-xs">
+                                      <td className="px-6 py-3 text-center text-xs text-gray-400">
                                         {sem}
                                       </td>
-                                      <td className="px-6 py-2.5 text-right">
-                                        <span className="font-bold text-emerald-600 text-sm">
-                                          {sub.count}
-                                        </span>
+                                      <td className="px-6 py-3 text-center rounded-r-xl">
+                                        {editSem === sKey ? (
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            value={editCounts[sub.name]}
+                                            onChange={(e) =>
+                                              setEditCounts({
+                                                ...editCounts,
+                                                [sub.name]: e.target.value,
+                                              })
+                                            }
+                                            className="w-20 px-2 py-1 border rounded-lg text-center"
+                                          />
+                                        ) : (
+                                          <span className="inline-flex px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-semibold text-xs">
+                                            {sub.count}
+                                          </span>
+                                        )}
                                       </td>
                                     </tr>
                                   ))}
@@ -707,7 +796,7 @@ function EnrollmentRecords() {
                   </p>
                 </div>
               </div>
-              <TreeTable entries={entries} />
+              <TreeTable entries={entries} setEntries={setEntries} />
             </div>
           </div>
         </div>

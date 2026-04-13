@@ -33,10 +33,7 @@ export default function AdminRateConfig() {
         termWork: convertToArray(res.data.termWork),
         termTest: convertToArray(res.data.termTest),
         oral: convertToArray(res.data.oral, "dual"),
-        oralWithPractical: convertToArray(
-          res.data.oralWithPractical,
-          "dual"
-        ),
+        oralWithPractical: convertToArray(res.data.oralWithPractical, "dual"),
         semester: {
           moderation: convertToArray(res.data.semester?.moderation),
           assessment: convertToArray(res.data.semester?.assessment),
@@ -57,9 +54,7 @@ export default function AdminRateConfig() {
   /* ---------------- CHANGE TRACK ---------------- */
 
   useEffect(() => {
-    setHasChanges(
-      JSON.stringify(rates) !== JSON.stringify(originalRates)
-    );
+    setHasChanges(JSON.stringify(rates) !== JSON.stringify(originalRates));
   }, [rates, originalRates]);
 
   /* ---------------- WARN BEFORE EXIT ---------------- */
@@ -73,8 +68,7 @@ export default function AdminRateConfig() {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () =>
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasChanges]);
 
   /* ---------------- HANDLERS ---------------- */
@@ -105,7 +99,7 @@ export default function AdminRateConfig() {
     if (!isEditMode) return;
 
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this rate?"
+      "Are you sure you want to delete this rate?",
     );
     if (!confirmDelete) return;
 
@@ -115,9 +109,7 @@ export default function AdminRateConfig() {
           ...prev,
           [section]: {
             ...prev[section],
-            [subSection]: prev[section][subSection].filter(
-              (r) => r.id !== id
-            ),
+            [subSection]: prev[section][subSection].filter((r) => r.id !== id),
           },
         };
       }
@@ -132,8 +124,7 @@ export default function AdminRateConfig() {
   const handleChange = (section, id, field, value, subSection = null) => {
     if (!isEditMode) return;
 
-    const update = (row) =>
-      row.id === id ? { ...row, [field]: value } : row;
+    const update = (row) => (row.id === id ? { ...row, [field]: value } : row);
 
     setRates((prev) => {
       if (subSection) {
@@ -181,10 +172,7 @@ export default function AdminRateConfig() {
         termWork: convertToObject(rates.termWork),
         termTest: convertToObject(rates.termTest),
         oral: convertToObject(rates.oral, "dual"),
-        oralWithPractical: convertToObject(
-          rates.oralWithPractical,
-          "dual"
-        ),
+        oralWithPractical: convertToObject(rates.oralWithPractical, "dual"),
         semester: {
           moderation: convertToObject(rates.semester.moderation),
           assessment: convertToObject(rates.semester.assessment),
@@ -203,15 +191,8 @@ export default function AdminRateConfig() {
 
   /* ---------------- TABLE UI ---------------- */
 
-  const renderTable = (
-    title,
-    section,
-    type = "simple",
-    subSection = null
-  ) => {
-    const data = subSection
-      ? rates[section]?.[subSection]
-      : rates[section];
+  const renderTable = (title, section, type = "simple", subSection = null) => {
+    const data = subSection ? rates[section]?.[subSection] : rates[section];
 
     return (
       <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm p-6">
@@ -243,15 +224,15 @@ export default function AdminRateConfig() {
                   </th>
                   {type === "simple" ? (
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Rate
+                      Rate (₹)
                     </th>
                   ) : (
                     <>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Internal
+                        Internal Rate
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        External
+                        External Rate
                       </th>
                     </>
                   )}
@@ -279,7 +260,7 @@ export default function AdminRateConfig() {
                             row.id,
                             "marks",
                             e.target.value,
-                            subSection
+                            subSection,
                           )
                         }
                         className={`w-full px-4 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -292,66 +273,86 @@ export default function AdminRateConfig() {
 
                     {type === "simple" ? (
                       <td className="px-6 py-4">
-                        <input
-                          value={row.rate}
-                          disabled={!isEditMode}
-                          onChange={(e) =>
-                            handleChange(
-                              section,
-                              row.id,
-                              "rate",
-                              e.target.value,
-                              subSection
-                            )
-                          }
-                          className={`w-full px-4 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            isEditMode
-                              ? "border border-gray-200 bg-white"
-                              : "border border-gray-100 bg-white cursor-default"
-                          }`}
-                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                            ₹
+                          </span>
+
+                          <input
+                            value={row.rate}
+                            disabled={!isEditMode}
+                            onChange={(e) =>
+                              handleChange(
+                                section,
+                                row.id,
+                                "rate",
+                                e.target.value,
+                                subSection,
+                              )
+                            }
+                            className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                              isEditMode
+                                ? "border border-gray-200 bg-white"
+                                : "border border-gray-100 bg-white cursor-default"
+                            }`}
+                          />
+                        </div>
                       </td>
                     ) : (
                       <>
                         <td className="px-6 py-4">
-                          <input
-                            value={row.internal}
-                            disabled={!isEditMode}
-                            onChange={(e) =>
-                              handleChange(
-                                section,
-                                row.id,
-                                "internal",
-                                e.target.value,
-                                subSection
-                              )
-                            }
-                            className={`w-full px-4 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              isEditMode
-                                ? "border border-gray-200 bg-white"
-                                : "border border-gray-100 bg-white cursor-default"
-                            }`}
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                              ₹
+                            </span>
+
+                            <input
+                              value={row.internal}
+                              disabled={!isEditMode}
+                              onChange={(e) =>
+                                handleChange(
+                                  section,
+                                  row.id,
+                                  "internal",
+                                  e.target.value,
+                                  subSection,
+                                )
+                              }
+                              className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 ${
+                                isEditMode
+                                  ? "border border-gray-200 bg-white"
+                                  : "border border-gray-100 bg-white cursor-default"
+                              }`}
+                            />
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <input
-                            value={row.external}
-                            disabled={!isEditMode}
-                            onChange={(e) =>
-                              handleChange(
-                                section,
-                                row.id,
-                                "external",
-                                e.target.value,
-                                subSection
-                              )
-                            }
-                            className={`w-full px-4 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              isEditMode
-                                ? "border border-gray-200 bg-white"
-                                : "border border-gray-100 bg-white cursor-default"
-                            }`}
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                              ₹
+                            </span>
+
+                            <input
+                              type="number"
+                              value={row.external}
+                              disabled={!isEditMode}
+                              onChange={(e) =>
+                                handleChange(
+                                  section,
+                                  row.id,
+                                  "external",
+                                  e.target.value,
+                                  subSection,
+                                )
+                              }
+                              placeholder="0"
+                              className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                isEditMode
+                                  ? "border border-gray-200 bg-white"
+                                  : "border border-gray-100 bg-white cursor-default"
+                              }`}
+                            />
+                          </div>
                         </td>
                       </>
                     )}
@@ -393,7 +394,7 @@ export default function AdminRateConfig() {
         <div className="flex-1 overflow-auto">
           <AdminNavbar
             handleSidebarOpen={() => setShowSidebar(true)}
-            page="Rate Configuration"
+            page="Remuneration Rate"
             desc="Manage dynamic rate settings"
           />
 
@@ -414,7 +415,7 @@ export default function AdminRateConfig() {
                     onClick={() => {
                       if (isEditMode && hasChanges) {
                         const confirmCancel = window.confirm(
-                          "Discard unsaved changes?"
+                          "Discard unsaved changes?",
                         );
                         if (!confirmCancel) return;
                         setRates(originalRates);
@@ -457,10 +458,19 @@ export default function AdminRateConfig() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {renderTable("Semester Moderation", "semester", "simple", "moderation")}
-              {renderTable("Semester Assessment", "semester", "simple", "assessment")}
+              {renderTable(
+                "Semester Moderation",
+                "semester",
+                "simple",
+                "moderation",
+              )}
+              {renderTable(
+                "Semester Assessment",
+                "semester",
+                "simple",
+                "assessment",
+              )}
             </div>
-
           </div>
         </div>
       </div>

@@ -37,7 +37,25 @@ export const fetchSubjectsBySemester = createAsyncThunk(
   }
 );
 
-// Thunk 3 ==> Fetch Subject Details
+// Thunk 3 ==> Fetch subjects by semester For Enrollment Record Page 
+export const fetchSubjectsBySemesterForER = createAsyncThunk(
+  "subjects/fetchBySemesterForER",
+  async ({ semester, department }, { rejectWithValue }) => {
+    try {
+      const response = await api.get(
+        `/faculty/subject/getList?semester=${semester}&department=${department}`
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue({
+        message: "Failed to fetch subjects by semester (Frontend Error)",
+        status: err.response?.status,
+      });
+    }
+  }
+);
+
+// Thunk 4 ==> Fetch Subject Details
 export const fetchSubjecDetails = createAsyncThunk(
   "subjects/fetchSubjectDetails",
   async (subjectId, { rejectWithValue }) => {
@@ -51,7 +69,7 @@ export const fetchSubjecDetails = createAsyncThunk(
   }
 );
 
-// Thunk 4 ==> Create subject
+// Thunk 5 ==> Create subject
 export const createSubject = createAsyncThunk(
   "subjects/createSubject",
   async (subjectData, { rejectWithValue }) => {
@@ -65,7 +83,7 @@ export const createSubject = createAsyncThunk(
   }
 );
 
-// Thunk 5 ==> Update subject
+// Thunk 6 ==> Update subject
 export const updateSubject = createAsyncThunk(
   "subjects/updateSubject",
   async ({ id, subjectData }, { rejectWithValue }) => {
@@ -82,7 +100,7 @@ export const updateSubject = createAsyncThunk(
   }
 );
 
-// Thunk 6 ==> Delete subject
+// Thunk 7 ==> Delete subject
 export const deleteSubject = createAsyncThunk(
   "subjects/deleteSubject",
   async (id, { rejectWithValue }) => {
@@ -112,7 +130,7 @@ const subjectSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Subjects
+      // Fetch all Subjects
       .addCase(fetchSubjects.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -145,6 +163,24 @@ const subjectSlice = createSlice({
         );
       })
       .addCase(fetchSubjectsBySemester.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload);
+      })
+
+      // Fetch Subjects by Semester For Enrollment Record Page
+      .addCase(fetchSubjectsBySemesterForER.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSubjectsBySemesterForER.fulfilled, (state, action) => {
+        state.loading = false;
+        state.subjects = action.payload;
+        toast.success(
+          "Subjects for selected semester type and department loaded successfully!"
+        );
+      })
+      .addCase(fetchSubjectsBySemesterForER.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         toast.error(action.payload);

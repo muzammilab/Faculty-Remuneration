@@ -1,17 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  FaPrint,
-  FaDownload,
-  FaCalculator,
-  FaInfoCircle,
-  FaArrowLeft,
-  FaBook,
-  FaBars,
-  FaUser,
-  FaBuilding,
-  FaDollarSign,
-} from "react-icons/fa";
+import { FaPrint, FaDownload, FaCalculator, FaInfoCircle, FaArrowLeft, FaBook, FaBars, FaUser, FaBuilding, FaDollarSign } from "react-icons/fa";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 import { useDispatch, useSelector } from "react-redux";
 import {

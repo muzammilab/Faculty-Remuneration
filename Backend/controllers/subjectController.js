@@ -1,4 +1,3 @@
-
 const Subject = require("../models/subjects");
 
 // Fetch all Subjects with optional filters

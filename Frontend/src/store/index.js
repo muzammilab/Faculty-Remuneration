@@ -4,6 +4,7 @@ import facultySlice from "./facultySlice";
 import subjectRemunerationSlice from "./subjectRemunerationSlice";
 import paymentSlice from "./paymentSlice";
 import authSlice from "./authSlice";
+import enrollmentSlice from "./enrollmentSlice";
 
 const remunerationStore = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const remunerationStore = configureStore({
     subjectRemuneration: subjectRemunerationSlice.reducer,
     paymentSlice: paymentSlice.reducer,
     authSlice: authSlice.reducer,
+    enrollmentSlice: enrollmentSlice.reducer,
   },
 });
 

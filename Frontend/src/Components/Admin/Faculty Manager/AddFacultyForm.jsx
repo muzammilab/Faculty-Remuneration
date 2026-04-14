@@ -6,14 +6,25 @@ import toast from "react-hot-toast";
 import AdminDesktopSidebar from "../AdminDesktopSidebar";
 
 import { useDispatch, useSelector } from "react-redux";
-import { fetchSubjectsBySemester, clearSubjects } from "../../../store/subjectSlice";
+import {
+  fetchSubjectsBySemester,
+  clearSubjects,
+} from "../../../store/subjectSlice";
 import { addFaculty } from "../../../store/facultySlice";
 
 function AddFacultyForm() {
   const dispatch = useDispatch();
-  const { subjects: subjectOptions, /* loading: fetchSubjectsBySemesterLoading, */ error: fetchSubjectsBySemesterError } = useSelector((state) => state.subjectSlice);
+  const {
+    subjects: subjectOptions,
+    /* loading: fetchSubjectsBySemesterLoading, */ error:
+      fetchSubjectsBySemesterError,
+  } = useSelector((state) => state.subjectSlice);
 
-  const { lastCreated, loading, error: addFacultyError } = useSelector((state) => state.facultySlice);
+  const {
+    lastCreated,
+    loading,
+    error: addFacultyError,
+  } = useSelector((state) => state.facultySlice);
 
   const isLoading = loading.addFacultyLoading;
   const errorMessage = addFacultyError || fetchSubjectsBySemesterError;
@@ -22,7 +33,7 @@ function AddFacultyForm() {
   const [assignedSubjects, setAssignedSubjects] = useState([]);
   const [success, setSuccess] = useState(false);
   // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState(""); // Also for addFaculty Error 
+  // const [error, setError] = useState(""); // Also for addFaculty Error
   const [formData, setFormData] = useState({
     name: "",
     department: "",
@@ -57,8 +68,14 @@ function AddFacultyForm() {
 
   const branchOptions = [
     { value: "Computer Engineering", label: "Computer Engineering" },
-    { value: "AIDS Engineering", label: "Artificial Intelligence & Data Science Engineering" },
-    { value: "ECS Engineering", label: "Electronics & Computer Science Engineering" },
+    {
+      value: "AIDS Engineering",
+      label: "Artificial Intelligence & Data Science Engineering",
+    },
+    {
+      value: "ECS Engineering",
+      label: "Electronics & Computer Science Engineering",
+    },
     { value: "Mechanical Engineering", label: "Mechanical Engineering" },
     { value: "Civil Engineering", label: "Civil Engineering" },
   ];
@@ -75,7 +92,7 @@ function AddFacultyForm() {
         fetchSubjectsBySemester({
           semester: formData.semester,
           department: formData.branch,
-        })
+        }),
       )
         .unwrap()
         .catch((err) => {
@@ -107,7 +124,7 @@ function AddFacultyForm() {
           a.branch === formData.branch && // ← ADD THIS LINE
           a.semester === formData.semester &&
           a.subject === formData.subject &&
-          a.subjectName === formData.subjectName // ← ADDed THIS LINE
+          a.subjectName === formData.subjectName, // ← ADDed THIS LINE
       );
 
       if (!exists) {
@@ -137,7 +154,7 @@ function AddFacultyForm() {
 
     try {
       const result = await dispatch(
-        addFaculty({ formData, assignedSubjects })
+        addFaculty({ formData, assignedSubjects }),
       ).unwrap(); // throws on reject
 
       console.log("Faculty created successfully:", result);
@@ -208,7 +225,9 @@ function AddFacultyForm() {
             </div>
 
             {/* Main Form Card */}
-            <div className="max-w-full mx-auto mt-5"> {/* Initially --> max-w-4xl */}
+            <div className="max-w-full mx-auto mt-5">
+              {" "}
+              {/* Initially --> max-w-4xl */}
               <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm p-8">
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -438,8 +457,6 @@ function AddFacultyForm() {
                             />
                           </div>
                         </div>
-
-                        {/* OLD: Subject Assignments Card was here */}
                       </div>
                     </div>
                   </div>
@@ -479,7 +496,7 @@ function AddFacultyForm() {
                               <option key={year} value={year}>
                                 {year}
                               </option>
-                            )
+                            ),
                           )}
                         </select>
                         {formData.academicYear && (
@@ -528,7 +545,7 @@ function AddFacultyForm() {
                                 value: formData.branch,
                                 label:
                                   branchOptions.find(
-                                    (b) => b.value === formData.branch
+                                    (b) => b.value === formData.branch,
                                   )?.label || formData.branch,
                               }
                             : null
@@ -563,7 +580,7 @@ function AddFacultyForm() {
                           Selected Branch:{" "}
                           {
                             branchOptions.find(
-                              (b) => b.value === formData.branch
+                              (b) => b.value === formData.branch,
                             )?.label
                           }
                         </span>
@@ -617,54 +634,50 @@ function AddFacultyForm() {
                       </div>
 
                       <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Subjects
-  </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Subjects
+                        </label>
 
-  <Select
-    options={subjectOptions.map((sub) => ({
-      value: sub.subjectId,
-      label: sub.name,
-    }))}
-
-    value={
-      formData.subject
-        ? {
-            value: formData.subject,
-            label: formData.subjectName,
-          }
-        : null
-    }
-
-    onChange={(selected) => {
-      console.log('Selected:', selected);
-      setFormData((prev) => ({
-        ...prev,
-        subject: selected ? selected.value : "",
-        subjectName: selected ? selected.label : "",
-      }))
-    }}
-
-    placeholder="Select Subject"
-    isDisabled={!formData.semester || !formData.branch}
-    className="basic-select"
-    classNamePrefix="select"
-    styles={{
-      control: (provided) => ({
-        ...provided,
-        border: "1px solid #e5e7eb",
-        borderRadius: "12px",
-        padding: "4px",
-        minHeight: "48px",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#e5e7eb",
-        },
-      }),
-    }}
-  />
-</div>
-
+                        <Select
+                          options={subjectOptions.map((sub) => ({
+                            value: sub.subjectId,
+                            label: sub.name,
+                          }))}
+                          value={
+                            formData.subject
+                              ? {
+                                  value: formData.subject,
+                                  label: formData.subjectName,
+                                }
+                              : null
+                          }
+                          onChange={(selected) => {
+                            console.log("Selected:", selected);
+                            setFormData((prev) => ({
+                              ...prev,
+                              subject: selected ? selected.value : "",
+                              subjectName: selected ? selected.label : "",
+                            }));
+                          }}
+                          placeholder="Select Subject"
+                          isDisabled={!formData.semester || !formData.branch}
+                          className="basic-select"
+                          classNamePrefix="select"
+                          styles={{
+                            control: (provided) => ({
+                              ...provided,
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "12px",
+                              padding: "4px",
+                              minHeight: "48px",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#e5e7eb",
+                              },
+                            }),
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <button
@@ -679,7 +692,7 @@ function AddFacultyForm() {
                       className="flex items-center gap-2 px-6 py-2.5 border border-blue-300 rounded-full text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Add Assignment
-                    </button> 
+                    </button>
 
                     {assignedSubjects.length > 0 && (
                       <div className="mt-6">
@@ -750,7 +763,11 @@ function AddFacultyForm() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="font-medium">{typeof errorMessage === 'string' ? errorMessage : errorMessage?.message || 'Failed to add faculty'}</span>
+                      <span className="font-medium">
+                        {typeof errorMessage === "string"
+                          ? errorMessage
+                          : errorMessage?.message || "Failed to add faculty"}
+                      </span>
                     </div>
                   )}
                   {success && (

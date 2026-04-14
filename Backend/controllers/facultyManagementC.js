@@ -1,4 +1,5 @@
 const Faculty = require("../models/faculty");
+const mongoose = require("mongoose");
 const Subject = require("../models/subjects");
 const bcrypt = require("bcryptjs");
 
@@ -22,7 +23,7 @@ exports.addFaculty = async (req, res) => {
 
                 if (!subjectDoc) {
                   throw new Error(
-                    `Subject not found: ${subj.name} (Semester ${subj.semester})`
+                    `Subject not found: ${subj.name} (Semester ${subj.semester})`,
                   );
                 }
 
@@ -32,21 +33,21 @@ exports.addFaculty = async (req, res) => {
                   department: subj.department,
                   semester: subj.semester,
                 };
-              })
+              }),
             );
 
             return {
               semesterType: semBlock.semesterType,
               subjects,
             };
-          })
+          }),
         );
 
         return {
           academicYear: yearBlock.academicYear,
           semesters,
         };
-      })
+      }),
     );
     const email = req.body.email;
     const Isexist = await Faculty.findOne({ email });
@@ -79,7 +80,6 @@ exports.addFaculty = async (req, res) => {
   }
 };
 
-
 // PUT /admin/faculty/:id/update
 exports.updateAssignments = async (req, res) => {
   try {
@@ -87,64 +87,95 @@ exports.updateAssignments = async (req, res) => {
     const { academicYear, semesterType, subjects } = req.body;
 
     const faculty = await Faculty.findById(id);
-    if (!faculty) return res.status(404).json({ error: "Faculty not found" });
 
-    // Resolve subjectId from DB using name + semester 
-    const resolvedSubjects = await Promise.all(
-      subjects.map(async (subj) => {
-        console.log("Searching for subject: ", subj);
-        const found = await Subject.findOne({
-          name: subj.name,
-          semester: subj.semester,
-          department: subj.branch,
-        });
+    if (!faculty) {
+      return res.status(404).json({
+        error: "Faculty not found",
+      });
+    }
 
-        if (!found) {
-          return res.status(400).json({
-            error: `Subject not found: ${subj.name} -- Branch ${subj.branch} (Semester ${subj.semester})`,
-          });
-        }
+    if (!academicYear || !semesterType || !subjects?.length) {
+      return res.status(400).json({
+        error: "Missing required fields",
+      });
+    }
 
-        console.log(found);
+    const resolvedSubjects = subjects.map((subj) => ({
+      subjectId: new mongoose.Types.ObjectId(subj.subjectId),
+      name: subj.name || "",
+      department: subj.department || "",
+      semester: Number(subj.semester) || 0,
 
-        return {
-          subjectId: found._id,
-          name: found.name,
-          semester: found.semester,
-          department: found.department,
-        };
-      })
-    );
+      hasTermWork: !!subj.hasTermWork,
+      termWorkMarks: Number(subj.termWorkMarks) || 0,
 
-    // Now update assignments with resolved subjectIds
+      hasOral: !!subj.hasOral,
+      oralMarks: Number(subj.oralMarks) || 0,
+
+      hasPractical: !!subj.hasPractical,
+      practicalMarks: Number(subj.practicalMarks) || 0,
+
+      hasTermTest: !!subj.hasTermTest,
+      termTestMarks: Number(subj.termTestMarks) || 0,
+
+      hasSemesterExam: !!subj.hasSemesterExam,
+      semesterExamMarks: Number(subj.semesterExamMarks) || 0,
+
+      count: Number(subj.count) || 0,
+    }));
+
     let yearBlock = faculty.assignedSubjects.find(
-      (a) => a.academicYear === academicYear
+      (a) => a.academicYear === academicYear,
     );
 
     if (yearBlock) {
       let semBlock = yearBlock.semesters.find(
-        (s) => s.semesterType === semesterType
+        (s) => s.semesterType === semesterType,
       );
+
       if (semBlock) {
-        semBlock.subjects.push(...resolvedSubjects); // same year + semType → add subjects
+        resolvedSubjects.forEach((newSubj) => {
+          const exists = semBlock.subjects.some(
+            (oldSubj) =>
+              String(oldSubj.subjectId) === String(newSubj.subjectId),
+          );
+
+          if (!exists) {
+            semBlock.subjects.push(newSubj);
+          }
+        });
       } else {
-        yearBlock.semesters.push({ semesterType, subjects: resolvedSubjects }); // same year, new sem
+        yearBlock.semesters.push({
+          semesterType,
+          subjects: resolvedSubjects,
+        });
       }
     } else {
       faculty.assignedSubjects.push({
         academicYear,
-        semesters: [{ semesterType, subjects: resolvedSubjects }],
-      }); // new year 
+        semesters: [
+          {
+            semesterType,
+            subjects: resolvedSubjects,
+          },
+        ],
+      });
     }
 
     await faculty.save();
-    res.status(200).json({ message: "Assignments updated", faculty });
+
+    res.status(200).json({
+      message: "Assignments updated",
+      faculty,
+    });
   } catch (err) {
-    console.error("Error updating assignments:", err.message);
-    res.status(500).json({ error: err.message, details: err.message });
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
-
 
 // PUT /admin/faculty/:id/remove-subject
 exports.removeSubject = async (req, res) => {
@@ -157,7 +188,7 @@ exports.removeSubject = async (req, res) => {
 
     // find year block
     let yearBlock = faculty.assignedSubjects.find(
-      (a) => a.academicYear === academicYear
+      (a) => a.academicYear === academicYear,
     );
     if (!yearBlock) {
       return res
@@ -167,7 +198,7 @@ exports.removeSubject = async (req, res) => {
 
     // find semester block
     let semBlock = yearBlock.semesters.find((s) =>
-      s.subjects.some((sub) => String(sub.subjectId) === String(subjectId))
+      s.subjects.some((sub) => String(sub.subjectId) === String(subjectId)),
     );
     if (!semBlock) {
       return res
@@ -177,18 +208,18 @@ exports.removeSubject = async (req, res) => {
 
     // remove subject
     semBlock.subjects = semBlock.subjects.filter(
-      (sub) => String(sub.subjectId) !== String(subjectId)
+      (sub) => String(sub.subjectId) !== String(subjectId),
     );
 
-    // clean up empty semesters 
+    // clean up empty semesters
     if (semBlock.subjects.length === 0) {
       yearBlock.semesters = yearBlock.semesters.filter((s) => s !== semBlock);
     }
 
-    // clean up empty year blocks 
+    // clean up empty year blocks
     if (yearBlock.semesters.length === 0) {
       faculty.assignedSubjects = faculty.assignedSubjects.filter(
-        (a) => a !== yearBlock
+        (a) => a !== yearBlock,
       );
     }
 
@@ -211,11 +242,10 @@ exports.getAllFaculties = async (req, res) => {
   }
 };
 
-
 exports.getSingleFaculty = async (req, res) => {
   try {
     const faculty = await Faculty.findById(
-      req.params.id
+      req.params.id,
     ); /* .populate("assignedSubjects.subjectId"); */
     if (!faculty) return res.status(404).json({ error: "Faculty not found" });
     res.json(faculty);
@@ -223,7 +253,6 @@ exports.getSingleFaculty = async (req, res) => {
     res.status(500).json({ error: "Error fetching faculty" });
   }
 };
-
 
 exports.editFaculty = async (req, res) => {
   try {
@@ -248,7 +277,6 @@ exports.editFaculty = async (req, res) => {
     res.status(400).json({ error: "Update failed", details: err.message });
   }
 };
-
 
 exports.deleteFaculty = async (req, res) => {
   try {

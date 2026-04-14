@@ -12,7 +12,6 @@ const facultySchema = new mongoose.Schema(
     resetOTP: String,
     resetOTPExpiry: Date,
     resetOTPAttempts: { type: Number, default: 0 },
-    /* baseSalary: { type: Number, required: true }, */
     travelAllowance: { type: Number, required: true },
     designation: {
       type: String,
@@ -39,13 +38,28 @@ const facultySchema = new mongoose.Schema(
             },
             subjects: [
               {
-                subjectId: {
-                  type: mongoose.Schema.Types.ObjectId,
-                  ref: "Subject",
-                },
-                name: String,
-                department: String, // NEW
-                semester: Number,
+                _id: false,
+                subjectId: mongoose.Schema.Types.ObjectId,
+                name: { type: String, required: true },
+                department: { type: String, required: true },
+                semester: { type: Number, required: true },
+
+                hasTermWork: Boolean,
+                termWorkMarks: Number,
+
+                hasOral: Boolean,
+                oralMarks: Number,
+
+                hasPractical: Boolean,
+                practicalMarks: Number,
+
+                hasTermTest: Boolean,
+                termTestMarks: Number,
+
+                hasSemesterExam: Boolean,
+                semesterExamMarks: Number,
+
+                count: Number,
               },
             ],
           },
@@ -53,7 +67,7 @@ const facultySchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Faculty", facultySchema);

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  FaUsers,
-  FaPlus,
-  FaChevronRight,
-  FaTimes,
-  FaHistory,
-} from "react-icons/fa";
+import { FaUsers, FaPlus, FaChevronRight, FaTimes, FaHistory } from "react-icons/fa";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -545,11 +539,20 @@ function AddClassModal({ onClose, onSave }) {
             Cancel
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => {
+              handleSave();
+              dispatch(clearSubjects());
+            }}
             className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer"
           >
             Save Entry
           </button>
+          {/* <button
+            onClick={handleSave}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+          >
+            Save Entry
+          </button> */}
         </div>
       </div>
     </div>

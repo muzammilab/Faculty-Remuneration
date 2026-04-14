@@ -182,8 +182,15 @@ function Payments() {
     // Fetch subject details using Redux action
     console.log(
       "The selected subject from faculty assigned subjects is ==>",
-      subjectObj,
+      subjectObj
     );
+
+    setOralPapers(subjectObj.hasOral ? subjectObj.count : ""); // Set initial count based on subject details
+    setPracticalPapers(subjectObj.hasPractical ? subjectObj.count : ""); // <-- NEW
+    setTermTestPapers(subjectObj.hasTermTest ? subjectObj.count : ""); // Set initial count based on subject details
+    setTermWorkPapers(subjectObj.hasTermWork ? subjectObj.count : ""); // Set initial count based on subject details
+    setSemesterPapers(subjectObj.hasSemesterExam ? subjectObj.count : ""); // Set initial count based on subject details
+
     dispatch(fetchSubjecDetails(subjectObj.subjectId));
   };
 
@@ -812,6 +819,7 @@ function Payments() {
                         </label>
                         <input
                           type="number"
+                          readOnly
                           value={oralPapers}
                           onChange={(e) => setOralPapers(e.target.value)}
                           className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -847,6 +855,7 @@ function Payments() {
                         </label>
                         <input
                           type="number"
+                          readOnly
                           value={termTestPapers}
                           onChange={(e) => setTermTestPapers(e.target.value)}
                           className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -882,6 +891,7 @@ function Payments() {
                         </label>
                         <input
                           type="number"
+                          readOnly
                           value={termWorkPapers}
                           onChange={(e) => setTermWorkPapers(e.target.value)}
                           className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
@@ -916,6 +926,7 @@ function Payments() {
                       </label>
                       <input
                         type="number"
+                        readOnly
                         value={practicalPapers}
                         onChange={(e) => setPracticalPapers(e.target.value)}
                         className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
@@ -1020,6 +1031,7 @@ function Payments() {
                         </label>
                         <input
                           type="number"
+                          readOnly
                           value={semesterPapers}
                           onChange={(e) => setSemesterPapers(e.target.value)}
                           className="block w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"

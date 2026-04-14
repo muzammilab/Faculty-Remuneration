@@ -7,7 +7,8 @@ function AdminSidebar() {
       label: "Finance",
       items: [
         { icon: <FaMoneyCheckAlt />, label: "Payments", path: "/admin/payments" },
-        { icon: <FaSyncAlt />, label: "Payment Management", path: "/admin/managepayments" },
+        { icon: <FaSyncAlt />, label: "Payment Management", path: "/admin/paymentsPage" },
+        // { icon: <FaSyncAlt />, label: "Payment Management", path: "/admin/managepayments" },
         { icon: <FaHistory />, label: "Payment History", path: "/admin/paymenthistory" },
       ],
     },

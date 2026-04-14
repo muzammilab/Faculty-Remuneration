@@ -7,6 +7,7 @@ export const fetchPayments = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get("/admin/payment/getAll");
+      console.log("Fetched payments:", response.data);
       return response.data;
     } catch (err) {
       const message = err.response?.data?.message || "Failed to load payments";

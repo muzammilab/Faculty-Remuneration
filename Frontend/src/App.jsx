@@ -35,6 +35,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUserRole } from "./store/authSlice";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
+import PaymentsPage from "./Components/Admin/PaymentsPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -63,7 +64,8 @@ function App() {
                 }
               />
             ) : (
-              <LandingPage />
+              // <LandingPage />
+              <Login />
             )
           }
         ></Route>
@@ -73,6 +75,8 @@ function App() {
         {/* Only admin */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin/payments" element={<Payments />}></Route>
+
+          <Route path="/admin/paymentsPage" element={<PaymentsPage />}></Route>
 
           <Route
             path="/admin/rates"
